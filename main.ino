@@ -2,7 +2,8 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <RTClib.h>
-#include <MenuSystem.h> // Include the MenuSystem library
+#include <MenuSystem.h>
+#include <Adafruit_Fingerprint.h> // Bibliothèque pour le capteur d'empreintes digitales
 
 // Screen dimensions
 #define SCREEN_WIDTH 128
@@ -17,12 +18,11 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 #define BUTTON_SET 4
 #define BUTTON_CANCEL 5
 
-// Variables for alarm settings
-int selectedDay = 1;   // 1-31
-int selectedHour = 0;  // 0-23
-int selectedMin = 0;   // 0-59
-bool alarmSet = false;
+// Fingerprint sensor pins
+#define FINGERPRINT_RX 10
+#define FINGERPRINT_TX 11
 
+// Electromagnet pin
 // Menu system
 MenuSystem ms;
 
