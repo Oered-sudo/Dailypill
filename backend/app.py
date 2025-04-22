@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 import json
 
@@ -7,9 +7,19 @@ app = Flask(__name__)
 # In-memory storage for alarms
 alarms = []
 
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 @app.route('/alarms', methods=['GET'])
 def get_alarms():
     return jsonify(alarms)
+
+@app.route('/add_alarm', methods=['POST'])
+def add_alarm():
+    data = request.json
+    alarms.append(data)
+    return jsonify({"status": "success", "alarms": alarms})
 
 @app.route('/alarms', methods=['POST'])
 def create_alarm():
@@ -43,4 +53,4 @@ def delete_alarm(alarm_id):
     return jsonify({'result': 'Alarm deleted'})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True)

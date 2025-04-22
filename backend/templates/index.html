@@ -1,0 +1,22 @@
+<!-- filepath: /workspaces/Dailypill/backend/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Alarm Manager</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Gestionnaire d'Alarme</h1>
+    <form id="alarmForm">
+        <label for="name">Nom de l'alarme :</label>
+        <input type="text" id="name" name="name" required>
+        <label for="time">Heure :</label>
+        <input type="time" id="time" name="time" required>
+        <button type="submit">Ajouter</button>
+    </form>
+    <ul id="alarmList"></ul>
+    <script src="/static/script.js"></script>
+</body>
+</html>
