@@ -30,7 +30,7 @@ Ce projet est une application web pour programmer des alarmes sur un ESP32, avec
 
 1. Clonez le dépôt :
    ```
-   git clone <URL_DU_DEPOT>
+   git clone https://github.com/Oered-sudo/Dailypill
    ```
 
 2. Installez les dépendances du backend :
@@ -45,14 +45,18 @@ Ce projet est une application web pour programmer des alarmes sur un ESP32, avec
    npm install
    ```
 
-4. Déployez le code sur l'ESP32 en utilisant PlatformIO.
+4. Déployez le code sur l'ESP32 en utilisant PlatformIO :
+   ```
+   cd esp32
+   platformio run --target upload
+   ```
 
 ## Utilisation
 
 - Lancez le serveur backend :
-  ```
-  python app.py
-  ```
+   ```
+   python app.py
+   ```
 
 - Ouvrez l'application frontend dans votre navigateur pour programmer et gérer vos alarmes.
 
