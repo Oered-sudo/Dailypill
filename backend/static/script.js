@@ -7,6 +7,21 @@ const recurrenceSelect = document.getElementById('recurrence');
 const customIntervalLabel = document.getElementById('customIntervalLabel');
 const customIntervalInput = document.getElementById('custom_interval');
 
+// Initialiser le sélecteur d'heure
+$(document).ready(function () {
+    $('#time').timepicker({
+        timeFormat: 'HH:mm',
+        interval: 30,
+        minTime: '00:00',
+        maxTime: '23:59',
+        defaultTime: '07:00',
+        startTime: '00:00',
+        dynamic: false,
+        dropdown: true,
+        scrollbar: true
+    });
+});
+
 // Afficher ou masquer l'intervalle personnalisé
 recurrenceSelect.addEventListener('change', () => {
     if (recurrenceSelect.value === 'custom') {
