@@ -27,6 +27,14 @@ def alarm_loop():
                         alarm['next_trigger'] = (next_trigger + timedelta(days=alarm['custom_interval'])).strftime("%Y-%m-%d")
                         print(f"Custom recurring alarm rescheduled: {alarm['name']}")
 
+                # Gestion des alarmes quotidiennes
+                elif alarm['recurrence'] == "daily":
+                    print(f"Daily alarm triggered: {alarm['name']}")
+
+                # Gestion des alarmes hebdomadaires
+                elif alarm['recurrence'] == "weekly":
+                    print(f"Weekly alarm triggered: {alarm['name']}")
+
         time.sleep(60)  # Vérifie les alarmes toutes les minutes
 
 @app.route('/')
