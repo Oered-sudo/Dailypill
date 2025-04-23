@@ -140,16 +140,18 @@ li button:hover {
     border: 1px solid #ccc;
     border-radius: 4px;
     background-color: #f9f9f9;
+    color: black; /* Couleur du texte en noir */
     cursor: pointer;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .day-btn.selected {
     background-color: #4CAF50;
-    color: white;
+    color: white; /* Couleur du texte en blanc lorsqu'il est sélectionné */
     border-color: #4CAF50;
 }
 
 .day-btn:hover {
     background-color: #e0e0e0;
+    color: black; /* Assurez-vous que le texte reste noir au survol */
 }
