@@ -1,4 +1,3 @@
-<!-- filepath: /workspaces/Dailypill/backend/templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,15 +7,26 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <h1>Gestionnaire d'Alarme</h1>
-    <form id="alarmForm">
-        <label for="name">Nom de l'alarme :</label>
-        <input type="text" id="name" name="name" required>
-        <label for="time">Heure :</label>
-        <input type="time" id="time" name="time" required>
-        <button type="submit">Ajouter</button>
-    </form>
-    <ul id="alarmList"></ul>
+    <header>
+        Gestionnaire d'Alarme ESP32
+    </header>
+    <main>
+        <form id="alarmForm">
+            <label for="name">Nom de l'alarme :</label>
+            <input type="text" id="name" name="name" required>
+            
+            <label for="date">Date :</label>
+            <input type="date" id="date" name="date" required>
+            
+            <label for="time">Heure :</label>
+            <input type="time" id="time" name="time" required>
+            
+            <button type="submit">Ajouter une alarme</button>
+        </form>
+        <ul id="alarmList">
+            <!-- Les alarmes seront ajoutées ici dynamiquement -->
+        </ul>
+    </main>
     <script src="/static/script.js"></script>
 </body>
 </html>
