@@ -95,15 +95,3 @@ if __name__ == '__main__':
     # Start the alarm loop in a separate thread
     threading.Thread(target=alarm_loop, daemon=True).start()
     app.run(debug=True)
-
-function updateAlarmList(alarms) {
-    alarmList.innerHTML = '';
-    alarms.forEach((alarm) => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            <span>${alarm.name} - ${alarm.time} (${alarm.recurrence || 'Pas de récurrence'})</span>
-            <button onclick="deleteAlarm(${alarm.id})" class="btn red">Supprimer</button>
-        `;
-        alarmList.appendChild(li);
-    });
-}
