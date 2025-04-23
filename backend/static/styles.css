@@ -155,3 +155,17 @@ li button:hover {
     background-color: #e0e0e0;
     color: black; /* Assurez-vous que le texte reste noir au survol */
 }
+
+#customIntervalContainer {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#custom_interval {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}

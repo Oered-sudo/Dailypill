@@ -16,25 +16,22 @@ document.addEventListener('DOMContentLoaded', function () {
             button.classList.toggle('selected');
         });
     });
+
+    // Afficher ou masquer l'intervalle personnalisé
+    const recurrenceSelect = document.getElementById('recurrence');
+    const customIntervalContainer = document.getElementById('customIntervalContainer');
+    recurrenceSelect.addEventListener('change', () => {
+        if (recurrenceSelect.value === 'custom') {
+            customIntervalContainer.style.display = 'block';
+        } else {
+            customIntervalContainer.style.display = 'none';
+        }
+    });
 });
 
 // Référence au formulaire et à la liste des alarmes
 const alarmForm = document.getElementById('alarmForm');
 const alarmList = document.getElementById('alarmList');
-const recurrenceSelect = document.getElementById('recurrence');
-const customIntervalLabel = document.getElementById('customIntervalLabel');
-const customIntervalInput = document.getElementById('custom_interval');
-
-// Afficher ou masquer l'intervalle personnalisé
-recurrenceSelect.addEventListener('change', () => {
-    if (recurrenceSelect.value === 'custom') {
-        customIntervalLabel.style.display = 'block';
-        customIntervalInput.style.display = 'block';
-    } else {
-        customIntervalLabel.style.display = 'none';
-        customIntervalInput.style.display = 'none';
-    }
-});
 
 // Ajouter une alarme
 alarmForm.addEventListener('submit', async (e) => {
@@ -43,8 +40,8 @@ alarmForm.addEventListener('submit', async (e) => {
     const name = document.getElementById('name').value;
     const time = document.getElementById('time').value; // Récupérer l'heure sélectionnée
     const days = Array.from(document.querySelectorAll('.day-btn.selected')).map(btn => parseInt(btn.dataset.value));
-    const recurrence = recurrenceSelect.value;
-    const customInterval = customIntervalInput.value ? parseInt(customIntervalInput.value) : null;
+    const recurrence = document.getElementById('recurrence').value;
+    const customInterval = document.getElementById('custom_interval').value || null;
 
     try {
         const response = await fetch('/alarms', {
