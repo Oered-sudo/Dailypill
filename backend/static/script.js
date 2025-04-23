@@ -4,54 +4,50 @@
 const alarmForm = document.getElementById('alarmForm');
 const alarmList = document.getElementById('alarmList');
 
-// Gestionnaire d'événements pour soumettre une nouvelle alarme
+// Ajouter une alarme
 alarmForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // Récupération des données du formulaire
     const name = document.getElementById('name').value;
     const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
+    const recurrence = document.getElementById('recurrence').value;
 
-    // Envoi des données au serveur
-    const response = await fetch('/add_alarm', {
+    const response = await fetch('/alarms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, date, time })
+        body: JSON.stringify({ name, date, time, recurrence })
     });
 
-    const data = await response.json();
-    updateAlarmList(data.alarms);
-
-    // Réinitialisation du formulaire
+    const alarm = await response.json();
+    fetchAlarms(); // Rafraîchir la liste des alarmes
     alarmForm.reset();
 });
 
-// Fonction pour récupérer les alarmes depuis le serveur
+// Récupérer les alarmes
 async function fetchAlarms() {
-    const response = await fetch('/get_alarms');
+    const response = await fetch('/alarms');
     const alarms = await response.json();
     updateAlarmList(alarms);
 }
 
-// Fonction pour mettre à jour la liste des alarmes
+// Mettre à jour la liste des alarmes
 function updateAlarmList(alarms) {
     alarmList.innerHTML = '';
-    alarms.forEach((alarm, index) => {
+    alarms.forEach((alarm) => {
         const li = document.createElement('li');
         li.innerHTML = `
-            <span>${alarm.name} - ${alarm.date} à ${alarm.time}</span>
-            <button onclick="deleteAlarm(${index})">Supprimer</button>
+            <span>${alarm.name} - ${alarm.date || 'Aucune date'} à ${alarm.time} (${alarm.recurrence || 'Pas de récurrence'})</span>
+            <button onclick="deleteAlarm(${alarm.id})">Supprimer</button>
         `;
         alarmList.appendChild(li);
     });
 }
 
-// Fonction pour supprimer une alarme
-async function deleteAlarm(index) {
-    const response = await fetch(`/delete_alarm/${index}`, { method: 'DELETE' });
-    const data = await response.json();
-    updateAlarmList(data.alarms);
+// Supprimer une alarme
+async function deleteAlarm(alarmId) {
+    await fetch(`/alarms/${alarmId}`, { method: 'DELETE' });
+    fetchAlarms(); // Rafraîchir la liste des alarmes
 }
 
 // Charger les alarmes au démarrage

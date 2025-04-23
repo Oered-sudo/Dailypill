@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime, timedelta
 import threading
+import time
 
 app = Flask(__name__)
 
@@ -12,14 +13,21 @@ def alarm_loop():
     while True:
         now = datetime.now()
         for alarm in alarms:
-            if alarm['recurrence'] and alarm['time']:
-                alarm_time = datetime.strptime(alarm['time'], "%H:%M").time()
-                if now.time() >= alarm_time and alarm['date'] is None:
-                    print(f"Alarm triggered: {alarm['name']}")
-                    # Logic for recurring alarms (e.g., daily)
-                    if alarm['recurrence'] == "daily":
-                        alarm['date'] = (now + timedelta(days=1)).strftime("%Y-%m-%d")
-        threading.Event().wait(60)  # Check every minute
+            # Vérifie si l'alarme est récurrente ou ponctuelle
+            alarm_time = datetime.strptime(alarm['time'], "%H:%M").time()
+            alarm_date = datetime.strptime(alarm['date'], "%Y-%m-%d").date() if alarm['date'] else None
+
+            # Déclenchement des alarmes ponctuelles
+            if alarm_date and alarm_date == now.date() and alarm_time <= now.time():
+                print(f"Alarm triggered: {alarm['name']}")
+                alarms.remove(alarm)
+
+            # Déclenchement des alarmes récurrentes
+            if alarm['recurrence'] == "daily" and alarm_time <= now.time():
+                print(f"Recurring alarm triggered: {alarm['name']}")
+                alarm['date'] = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+
+        time.sleep(60)  # Vérifie les alarmes toutes les minutes
 
 @app.route('/')
 def index():
@@ -39,7 +47,6 @@ def create_alarm():
         'name': data['name'],
         'time': data['time'],
         'date': data.get('date', None),
-        'interval': data.get('interval', None),
         'recurrence': data.get('recurrence', None)  # New field for recurrence
     }
     alarms.append(alarm)
@@ -54,8 +61,7 @@ def update_alarm(alarm_id):
             alarm['name'] = data.get('name', alarm['name'])
             alarm['time'] = data.get('time', alarm['time'])
             alarm['date'] = data.get('date', alarm['date'])
-            alarm['interval'] = data.get('interval', alarm['interval'])
-            alarm['recurrence'] = data.get('recurrence', alarm['recurrence'])  # Update recurrence
+            alarm['recurrence'] = data.get('recurrence', alarm['recurrence'])
             return jsonify(alarm)
     return jsonify({'error': 'Alarm not found'}), 404
 

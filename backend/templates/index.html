@@ -8,24 +8,36 @@
 </head>
 <body>
     <header>
-        Gestionnaire d'Alarme ESP32
+        <h1>Gestionnaire d'Alarme ESP32</h1>
     </header>
     <main>
-        <form id="alarmForm">
-            <label for="name">Nom de l'alarme :</label>
-            <input type="text" id="name" name="name" required>
-            
-            <label for="date">Date :</label>
-            <input type="date" id="date" name="date" required>
-            
-            <label for="time">Heure :</label>
-            <input type="time" id="time" name="time" required>
-            
-            <button type="submit">Ajouter une alarme</button>
-        </form>
-        <ul id="alarmList">
-            <!-- Les alarmes seront ajoutées ici dynamiquement -->
-        </ul>
+        <section>
+            <h2>Ajouter une Alarme</h2>
+            <form id="alarmForm">
+                <label for="name">Nom de l'alarme :</label>
+                <input type="text" id="name" name="name" required>
+                
+                <label for="date">Date :</label>
+                <input type="date" id="date" name="date">
+                
+                <label for="time">Heure :</label>
+                <input type="time" id="time" name="time" required>
+                
+                <label for="recurrence">Récurrence :</label>
+                <select id="recurrence" name="recurrence">
+                    <option value="">Aucune</option>
+                    <option value="daily">Quotidienne</option>
+                </select>
+                
+                <button type="submit">Ajouter une alarme</button>
+            </form>
+        </section>
+        <section>
+            <h2>Liste des Alarmes</h2>
+            <ul id="alarmList">
+                <!-- Les alarmes seront ajoutées ici dynamiquement -->
+            </ul>
+        </section>
     </main>
     <script src="/static/script.js"></script>
 </body>
