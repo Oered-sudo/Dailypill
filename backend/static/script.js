@@ -8,11 +8,11 @@ const customIntervalLabel = document.getElementById('customIntervalLabel');
 const customIntervalInput = document.getElementById('custom_interval');
 
 // Initialiser la roue pour la sélection de l'heure
-mobiscroll.timepicker('#time', {
-    theme: 'ios', // Thème de la roue
-    display: 'inline', // Affichage en ligne
-    timeFormat: 'HH:mm', // Format 24 heures
-    stepMinute: 1 // Intervalle de 1 minute
+const timePicker = new WheelTimePicker({
+    element: document.getElementById('timePicker'),
+    format: 'HH:mm', // Format 24 heures
+    interval: 1, // Intervalle de 1 minute
+    defaultTime: '07:00', // Heure par défaut
 });
 
 // Afficher ou masquer l'intervalle personnalisé
@@ -31,7 +31,7 @@ alarmForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const name = document.getElementById('name').value;
-    const time = document.getElementById('time').value;
+    const time = timePicker.getTime(); // Récupérer l'heure sélectionnée
     const days = Array.from(document.querySelectorAll('#days input:checked')).map(input => parseInt(input.value));
     const recurrence = recurrenceSelect.value;
     const customInterval = customIntervalInput.value ? parseInt(customIntervalInput.value) : null;

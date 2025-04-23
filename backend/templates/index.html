@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 Alarm Manager</title>
     <link rel="stylesheet" href="/static/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-timepicker/1.13.18/jquery.timepicker.min.css">
-    <!-- Mobiscroll CSS --> 
-    <link rel="stylesheet" href="https://cdn.mobiscroll.com/5.20.0/css/mobiscroll.min.css">
+    <!-- Wheel Time Picker CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/wheel-time-picker/dist/wheel-time-picker.min.css">
 </head>
 <body>
     <header>
@@ -21,7 +20,7 @@
                 <input type="text" id="name" name="name" required>
                 
                 <label for="time">Heure :</label>
-                <input type="text" id="time" name="time" required>
+                <div id="timePicker"></div>
                 
                 <label for="days">Jours :</label>
                 <div id="days">
@@ -55,10 +54,8 @@
             </ul>
         </section>
     </main>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-timepicker/1.13.18/jquery.timepicker.min.js"></script>
-    <!-- Mobiscroll JS -->
-    <script src="https://cdn.mobiscroll.com/5.20.0/js/mobiscroll.javascript.min.js"></script>
+    <!-- Wheel Time Picker JS -->
+    <script src="https://cdn.jsdelivr.net/npm/wheel-time-picker/dist/wheel-time-picker.min.js"></script>
     <script src="/static/script.js"></script>
 </body>
 </html>
