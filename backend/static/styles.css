@@ -87,6 +87,7 @@ li button:hover {
     background-color: #d32f2f;
 }
 
+/* Style pour le champ de sélection d'heure */
 .timepicker {
     width: 100%;
     padding: 10px;
@@ -96,7 +97,33 @@ li button:hover {
     margin-bottom: 10px;
 }
 
+/* Style pour la roue de sélection d'heure */
 .wheel-time-picker {
     margin: 10px 0;
     font-size: 16px;
+    text-align: center;
+}
+
+.wheel-time-picker .wheel {
+    display: inline-block;
+    margin: 0 5px;
+}
+
+.wheel-time-picker .wheel div {
+    padding: 10px;
+    font-size: 18px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.wheel-time-picker .wheel div:hover {
+    background-color: #f0f0f0;
+}
+
+.wheel-time-picker .selected {
+    font-weight: bold;
+    color: #4CAF50;
 }
