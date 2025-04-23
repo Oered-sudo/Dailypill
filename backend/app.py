@@ -59,6 +59,11 @@ def create_alarm():
         'custom_interval': data.get('custom_interval', None),  # Intervalle personnalisé (en jours)
         'next_trigger': data.get('next_trigger', None)  # Prochaine date de déclenchement pour les récurrences personnalisées
     }
+
+    # Initialiser next_trigger pour les alarmes personnalisées
+    if alarm['recurrence'] == "custom" and alarm['custom_interval']:
+        alarm['next_trigger'] = (datetime.now() + timedelta(days=alarm['custom_interval'])).strftime("%Y-%m-%d")
+
     alarms.append(alarm)
     return jsonify(alarm), 201
 
@@ -74,6 +79,11 @@ def update_alarm(alarm_id):
             alarm['recurrence'] = data.get('recurrence', alarm['recurrence'])
             alarm['custom_interval'] = data.get('custom_interval', alarm['custom_interval'])
             alarm['next_trigger'] = data.get('next_trigger', alarm['next_trigger'])
+
+            # Réinitialiser next_trigger si la récurrence personnalisée est mise à jour
+            if alarm['recurrence'] == "custom" and alarm['custom_interval']:
+                alarm['next_trigger'] = (datetime.now() + timedelta(days=alarm['custom_interval'])).strftime("%Y-%m-%d")
+
             return jsonify(alarm)
     return jsonify({'error': 'Alarm not found'}), 404
 
