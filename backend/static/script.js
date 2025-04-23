@@ -7,19 +7,12 @@ const recurrenceSelect = document.getElementById('recurrence');
 const customIntervalLabel = document.getElementById('customIntervalLabel');
 const customIntervalInput = document.getElementById('custom_interval');
 
-// Initialiser le sélecteur d'heure
-$(document).ready(function () {
-    $('#time').timepicker({
-        timeFormat: 'HH:mm',
-        interval: 30,
-        minTime: '00:00',
-        maxTime: '23:59',
-        defaultTime: '07:00',
-        startTime: '00:00',
-        dynamic: false,
-        dropdown: true,
-        scrollbar: true
-    });
+// Initialiser la roue pour la sélection de l'heure
+mobiscroll.timepicker('#time', {
+    theme: 'ios', // Thème de la roue
+    display: 'inline', // Affichage en ligne
+    timeFormat: 'HH:mm', // Format 24 heures
+    stepMinute: 1 // Intervalle de 1 minute
 });
 
 // Afficher ou masquer l'intervalle personnalisé
