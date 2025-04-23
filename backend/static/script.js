@@ -1,22 +1,21 @@
 // filepath: /workspaces/Dailypill/backend/static/script.js
 
+document.addEventListener('DOMContentLoaded', function () {
+    // Initialiser le sélecteur d'heure
+    const timepickers = document.querySelectorAll('.timepicker');
+    M.Timepicker.init(timepickers, {
+        defaultTime: '07:00', // Heure par défaut
+        twelveHour: false, // Format 24 heures
+        autoClose: true // Fermer automatiquement après la sélection
+    });
+});
+
 // Référence au formulaire et à la liste des alarmes
 const alarmForm = document.getElementById('alarmForm');
 const alarmList = document.getElementById('alarmList');
 const recurrenceSelect = document.getElementById('recurrence');
 const customIntervalLabel = document.getElementById('customIntervalLabel');
 const customIntervalInput = document.getElementById('custom_interval');
-
-// Vérifiez si l'élément timePicker existe avant d'initialiser la roue
-let timePicker;
-if (document.getElementById('timePicker')) {
-    timePicker = new WheelTimePicker({
-        element: document.getElementById('timePicker'),
-        format: 'HH:mm', // Format 24 heures
-        interval: 1, // Intervalle de 1 minute
-        defaultTime: '07:00', // Heure par défaut
-    });
-}
 
 // Afficher ou masquer l'intervalle personnalisé
 recurrenceSelect.addEventListener('change', () => {
@@ -34,7 +33,7 @@ alarmForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const name = document.getElementById('name').value;
-    const time = timePicker ? timePicker.getTime() : document.getElementById('time').value; // Récupérer l'heure sélectionnée
+    const time = document.getElementById('time').value; // Récupérer l'heure sélectionnée
     const days = Array.from(document.querySelectorAll('#days input:checked')).map(input => parseInt(input.value));
     const recurrence = recurrenceSelect.value;
     const customInterval = customIntervalInput.value ? parseInt(customIntervalInput.value) : null;
@@ -82,7 +81,7 @@ function updateAlarmList(alarms) {
         const li = document.createElement('li');
         li.innerHTML = `
             <span>${alarm.name} - ${alarm.time} (${alarm.recurrence || 'Pas de récurrence'})</span>
-            <button onclick="deleteAlarm(${alarm.id})">Supprimer</button>
+            <button onclick="deleteAlarm(${alarm.id})" class="btn red">Supprimer</button>
         `;
         alarmList.appendChild(li);
     });
