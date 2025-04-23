@@ -3,20 +3,35 @@
 // Référence au formulaire et à la liste des alarmes
 const alarmForm = document.getElementById('alarmForm');
 const alarmList = document.getElementById('alarmList');
+const recurrenceSelect = document.getElementById('recurrence');
+const customIntervalLabel = document.getElementById('customIntervalLabel');
+const customIntervalInput = document.getElementById('custom_interval');
+
+// Afficher ou masquer l'intervalle personnalisé
+recurrenceSelect.addEventListener('change', () => {
+    if (recurrenceSelect.value === 'custom') {
+        customIntervalLabel.style.display = 'block';
+        customIntervalInput.style.display = 'block';
+    } else {
+        customIntervalLabel.style.display = 'none';
+        customIntervalInput.style.display = 'none';
+    }
+});
 
 // Ajouter une alarme
 alarmForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const name = document.getElementById('name').value;
-    const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
-    const recurrence = document.getElementById('recurrence').value;
+    const days = Array.from(document.querySelectorAll('#days input:checked')).map(input => parseInt(input.value));
+    const recurrence = recurrenceSelect.value;
+    const customInterval = customIntervalInput.value ? parseInt(customIntervalInput.value) : null;
 
     const response = await fetch('/alarms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, date, time, recurrence })
+        body: JSON.stringify({ name, time, days, recurrence, custom_interval: customInterval })
     });
 
     const alarm = await response.json();
@@ -37,7 +52,7 @@ function updateAlarmList(alarms) {
     alarms.forEach((alarm) => {
         const li = document.createElement('li');
         li.innerHTML = `
-            <span>${alarm.name} - ${alarm.date || 'Aucune date'} à ${alarm.time} (${alarm.recurrence || 'Pas de récurrence'})</span>
+            <span>${alarm.name} - ${alarm.time} (${alarm.recurrence || 'Pas de récurrence'})</span>
             <button onclick="deleteAlarm(${alarm.id})">Supprimer</button>
         `;
         alarmList.appendChild(li);

@@ -17,17 +17,30 @@
                 <label for="name">Nom de l'alarme :</label>
                 <input type="text" id="name" name="name" required>
                 
-                <label for="date">Date :</label>
-                <input type="date" id="date" name="date">
-                
                 <label for="time">Heure :</label>
                 <input type="time" id="time" name="time" required>
+                
+                <label for="days">Jours :</label>
+                <div id="days">
+                    <label><input type="checkbox" value="0"> Lundi</label>
+                    <label><input type="checkbox" value="1"> Mardi</label>
+                    <label><input type="checkbox" value="2"> Mercredi</label>
+                    <label><input type="checkbox" value="3"> Jeudi</label>
+                    <label><input type="checkbox" value="4"> Vendredi</label>
+                    <label><input type="checkbox" value="5"> Samedi</label>
+                    <label><input type="checkbox" value="6"> Dimanche</label>
+                </div>
                 
                 <label for="recurrence">Récurrence :</label>
                 <select id="recurrence" name="recurrence">
                     <option value="">Aucune</option>
                     <option value="daily">Quotidienne</option>
+                    <option value="weekly">Hebdomadaire</option>
+                    <option value="custom">Personnalisée</option>
                 </select>
+                
+                <label for="custom_interval" id="customIntervalLabel" style="display: none;">Intervalle personnalisé (en jours) :</label>
+                <input type="number" id="custom_interval" name="custom_interval" style="display: none;">
                 
                 <button type="submit">Ajouter une alarme</button>
             </form>

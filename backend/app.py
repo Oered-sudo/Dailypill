@@ -13,19 +13,19 @@ def alarm_loop():
     while True:
         now = datetime.now()
         for alarm in alarms:
-            # Vérifie si l'alarme est récurrente ou ponctuelle
             alarm_time = datetime.strptime(alarm['time'], "%H:%M").time()
-            alarm_date = datetime.strptime(alarm['date'], "%Y-%m-%d").date() if alarm['date'] else None
+            alarm_days = alarm.get('days', [])  # Liste des jours sélectionnés (0 = Lundi, 6 = Dimanche)
 
-            # Déclenchement des alarmes ponctuelles
-            if alarm_date and alarm_date == now.date() and alarm_time <= now.time():
+            # Vérifie si l'alarme doit être déclenchée aujourd'hui
+            if now.weekday() in alarm_days and alarm_time <= now.time():
                 print(f"Alarm triggered: {alarm['name']}")
-                alarms.remove(alarm)
 
-            # Déclenchement des alarmes récurrentes
-            if alarm['recurrence'] == "daily" and alarm_time <= now.time():
-                print(f"Recurring alarm triggered: {alarm['name']}")
-                alarm['date'] = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+                # Gestion des récurrences personnalisées
+                if alarm['recurrence'] == "custom":
+                    next_trigger = datetime.strptime(alarm['next_trigger'], "%Y-%m-%d")
+                    if now.date() >= next_trigger.date():
+                        alarm['next_trigger'] = (next_trigger + timedelta(days=alarm['custom_interval'])).strftime("%Y-%m-%d")
+                        print(f"Custom recurring alarm rescheduled: {alarm['name']}")
 
         time.sleep(60)  # Vérifie les alarmes toutes les minutes
 
@@ -46,8 +46,10 @@ def create_alarm():
         'id': len(alarms) + 1,
         'name': data['name'],
         'time': data['time'],
-        'date': data.get('date', None),
-        'recurrence': data.get('recurrence', None)  # New field for recurrence
+        'days': data.get('days', []),  # Liste des jours sélectionnés
+        'recurrence': data.get('recurrence', None),  # Type de récurrence
+        'custom_interval': data.get('custom_interval', None),  # Intervalle personnalisé (en jours)
+        'next_trigger': data.get('next_trigger', None)  # Prochaine date de déclenchement pour les récurrences personnalisées
     }
     alarms.append(alarm)
     return jsonify(alarm), 201
@@ -60,8 +62,10 @@ def update_alarm(alarm_id):
         if alarm['id'] == alarm_id:
             alarm['name'] = data.get('name', alarm['name'])
             alarm['time'] = data.get('time', alarm['time'])
-            alarm['date'] = data.get('date', alarm['date'])
+            alarm['days'] = data.get('days', alarm['days'])
             alarm['recurrence'] = data.get('recurrence', alarm['recurrence'])
+            alarm['custom_interval'] = data.get('custom_interval', alarm['custom_interval'])
+            alarm['next_trigger'] = data.get('next_trigger', alarm['next_trigger'])
             return jsonify(alarm)
     return jsonify({'error': 'Alarm not found'}), 404
 
