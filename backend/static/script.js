@@ -8,6 +8,14 @@ document.addEventListener('DOMContentLoaded', function () {
         twelveHour: false, // Format 24 heures
         autoClose: true // Fermer automatiquement après la sélection
     });
+
+    // Gestion de la sélection des jours
+    const dayButtons = document.querySelectorAll('.day-btn');
+    dayButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            button.classList.toggle('selected');
+        });
+    });
 });
 
 // Référence au formulaire et à la liste des alarmes
@@ -34,7 +42,7 @@ alarmForm.addEventListener('submit', async (e) => {
 
     const name = document.getElementById('name').value;
     const time = document.getElementById('time').value; // Récupérer l'heure sélectionnée
-    const days = Array.from(document.querySelectorAll('#days input:checked')).map(input => parseInt(input.value));
+    const days = Array.from(document.querySelectorAll('.day-btn.selected')).map(btn => parseInt(btn.dataset.value));
     const recurrence = recurrenceSelect.value;
     const customInterval = customIntervalInput.value ? parseInt(customIntervalInput.value) : null;
 
@@ -52,6 +60,7 @@ alarmForm.addEventListener('submit', async (e) => {
         const alarm = await response.json();
         fetchAlarms(); // Rafraîchir la liste des alarmes
         alarmForm.reset();
+        document.querySelectorAll('.day-btn').forEach(btn => btn.classList.remove('selected'));
     } catch (error) {
         console.error('Erreur :', error);
         alert('Une erreur est survenue lors de l\'ajout de l\'alarme.');
