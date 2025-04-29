@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-struct Alarm {
+struct AlarmData {
     String name;
     int hour;
     int minute;
@@ -12,11 +12,11 @@ struct Alarm {
 
 class AlarmManager {
 private:
-    std::vector<Alarm> alarms;
+    std::vector<AlarmData> alarms;
 
 public:
     void addAlarm(const String& name, int hour, int minute) {
-        Alarm newAlarm = { name, hour, minute, true };
+        AlarmData newAlarm = { name, hour, minute, true };
         alarms.push_back(newAlarm);
     }
 
@@ -44,11 +44,11 @@ public:
         }
     }
 
-    void triggerAlarm(const Alarm& alarm) {
+    void triggerAlarm(const AlarmData& alarm) {
         // Code to trigger the alarm (e.g., sound a buzzer, send a notification)
     }
 
-    const std::vector<Alarm>& getAlarms() const {
+    const std::vector<AlarmData>& getAlarms() const {
         return alarms;
     }
 };

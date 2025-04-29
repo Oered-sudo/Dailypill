@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <Servo.h>
+#include <ESP32Servo.h>
 #include "Display.h"
 #include "AlarmManager.h"
 #include <WiFi.h>
@@ -112,7 +112,12 @@ void setup() {
 }
 
 void loop() {
-    checkAlarms();
+    // Vérifie les alarmes actives
+    void checkAlarms() {
+        alarmManager.checkAlarms();
+    }
+    
+        checkAlarms();
 
     // Si une alarme est active, activer le buzzer
     if (isAlarmActive()) {
