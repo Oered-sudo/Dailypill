@@ -3,12 +3,14 @@
 #include <Arduino.h>
 #include <vector>
 
+
 struct AlarmData {
     String name;
     int hour;
     int minute;
     bool active;
 };
+
 
 class AlarmManager {
 private:
