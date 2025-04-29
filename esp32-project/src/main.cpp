@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Servo.h> // Bibliothèque pour contrôler les servomoteurs
-#include "i2c_display.h"
-#include "alarm_manager.h"
+#include "Display.h"
+#include "AlarmManager.h"
 #include <WiFi.h>
 #include <WebServer.h>
 
