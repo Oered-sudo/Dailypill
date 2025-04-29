@@ -35,8 +35,10 @@ public:
     }
 
     void checkAlarms() {
-        int currentHour = hour();
-        int currentMinute = minute();
+        time_t now = time(nullptr);
+        struct tm* timeInfo = localtime(&now);
+        int currentHour = timeInfo->tm_hour;
+        int currentMinute = timeInfo->tm_min;
         for (const auto& alarm : alarms) {
             if (alarm.active && alarm.hour == currentHour && alarm.minute == currentMinute) {
                 triggerAlarm(alarm);

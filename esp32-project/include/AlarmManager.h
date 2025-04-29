@@ -1,3 +1,7 @@
+#ifndef ALARMMANAGER_H
+#define ALARMMANAGER_H
+
+// Prevent multiple inclusions of this header file
 #pragma once
 
 #include <Arduino.h>
@@ -62,3 +66,5 @@ private:
 
     std::vector<Alarm> alarms; // Liste des alarmes
 };
+
+#endif // ALARMMANAGER_H
