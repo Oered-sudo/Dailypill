@@ -2,5 +2,7 @@
 
 #include <Arduino.h>
 
+
 void setupDisplay();
-void updateDisplay(String alarmNames[], size_t alarmCount);
+void displayAlarms(const String* alarmNames, int alarmCount);
+void updateDisplay(const String* alarmNames, int alarmCount);
