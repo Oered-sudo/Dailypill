@@ -72,3 +72,8 @@ public:
 };
 
 // Implémentation des méthodes de AlarmManager
+
+void AlarmManager::addAlarm(const String& name, int hour, int minute, bool active) {
+    AlarmData newAlarm = {name, hour, minute, active};
+    alarms.push_back(newAlarm);
+}

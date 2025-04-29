@@ -62,7 +62,7 @@ void addAlarmCallback(Control *sender, int type) {
         int hour = alarmTime.substring(0, 2).toInt();
         int minute = alarmTime.substring(3, 5).toInt();
 
-        alarmManager.addAlarm(std::string(alarmName.c_str()), hour, minute);
+        alarmManager.addAlarm(alarmName, hour, minute);
         Serial.printf("Alarme ajoutée : %s à %02d:%02d\n", alarmName.c_str(), hour, minute);
     }
 }
