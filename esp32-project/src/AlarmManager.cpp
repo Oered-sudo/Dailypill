@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <vector>
 #include <string>
+#include <time.h> // Pour utiliser la fonction time()
 
 struct AlarmData {
     String name;
@@ -15,8 +16,8 @@ private:
     std::vector<AlarmData> alarms;
 
 public:
-    void addAlarm(const String& name, int hour, int minute) {
-        AlarmData newAlarm = { name, hour, minute, true };
+    void addAlarm(const String& name, int hour, int minute, bool active) {
+        AlarmData newAlarm = { name, hour, minute, active };
         alarms.push_back(newAlarm);
     }
 
@@ -26,11 +27,12 @@ public:
         }
     }
 
-    void updateAlarm(int index, const String& name, int hour, int minute) {
+    void updateAlarm(int index, const String& name, int hour, int minute, bool active) {
         if (index >= 0 && index < alarms.size()) {
             alarms[index].name = name;
             alarms[index].hour = hour;
             alarms[index].minute = minute;
+            alarms[index].active = active;
         }
     }
 
@@ -47,7 +49,7 @@ public:
     }
 
     void triggerAlarm(const AlarmData& alarm) {
-        // Code to trigger the alarm (e.g., sound a buzzer, send a notification)
+        // Code pour déclencher l'alarme (par exemple, activer un buzzer)
     }
 
     const std::vector<AlarmData>& getAlarms() const {
