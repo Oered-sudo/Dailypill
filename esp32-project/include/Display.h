@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 
+#include <vector>
 
 void setupDisplay();
 void displayAlarms(const String* alarmNames, int alarmCount);
