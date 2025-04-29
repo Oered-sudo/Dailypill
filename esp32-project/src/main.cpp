@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <ESP32Servo.h>
+#include <ESP32Servo.h> // Assurez-vous que la bibliothèque est installée
 #include "Display.h"
 #include "AlarmManager.h"
 #include <WiFi.h>
@@ -14,8 +14,8 @@ const char* password = "12345678"; // Mot de passe (au moins 8 caractères)
 const int buzzerPin = 25;
 
 // Configuration des servomoteurs
-Servo servo1, servo2, servo3, servo4;
-const int servoPins[] = {26, 27, 14, 12};
+Servo servo1, servo2, servo3, servo4; // Déclaration des objets Servo
+const int servoPins[] = {26, 27, 14, 12}; // Broches des servos
 
 // Configuration du capteur PIR
 const int pirPin = 33;
@@ -62,7 +62,7 @@ void addAlarmCallback(Control *sender, int type) {
         int hour = alarmTime.substring(0, 2).toInt();
         int minute = alarmTime.substring(3, 5).toInt();
 
-        alarmManager.addAlarm(alarmName, hour, minute);
+        alarmManager.addAlarm(std::string(alarmName.c_str()), hour, minute);
         Serial.printf("Alarme ajoutée : %s à %02d:%02d\n", alarmName.c_str(), hour, minute);
     }
 }
@@ -113,14 +113,10 @@ void setup() {
 
 void loop() {
     // Vérifie les alarmes actives
-    void checkAlarms() {
-        alarmManager.checkAlarms();
-    }
-    
-        checkAlarms();
+    alarmManager.checkAlarms();
 
     // Si une alarme est active, activer le buzzer
-    if (isAlarmActive()) {
+    if (alarmManager.isAlarmActive()) {
         activateBuzzer();
     } else {
         deactivateBuzzer();

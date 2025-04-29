@@ -2,10 +2,9 @@
 
 #include <Arduino.h>
 #include <vector>
-#include <string>
 
 struct AlarmData {
-    std::string name;
+    String name;
     int hour;
     int minute;
     bool active;
@@ -16,11 +15,13 @@ private:
     std::vector<AlarmData> alarms;
 
 public:
-    void addAlarm(const std::string& name, int hour, int minute, bool active = true);
+    void addAlarm(const String& name, int hour, int minute, bool active = true);
     void removeAlarm(int index);
-    void updateAlarm(int index, const std::string& name, int hour, int minute, bool active);
+    void updateAlarm(int index, const String& name, int hour, int minute, bool active);
     void checkAlarms();
     void triggerAlarm(const AlarmData& alarm);
     const std::vector<AlarmData>& getAlarms() const;
-    void toggleAlarm(int index, bool active);
+
+    // Nouvelle méthode pour vérifier si une alarme est active
+    bool isAlarmActive() const;
 };
