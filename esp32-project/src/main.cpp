@@ -79,6 +79,22 @@ void setupESPUI() {
 
     // Bouton pour ajouter une alarme
     ESPUI.addControl(ControlType::Button, "Ajouter une alarme", "Ajouter", ControlColor::Emerald, 3, addAlarmCallback);
+
+    // Bouton pour tester le buzzer
+    ESPUI.addControl(ControlType::Button, "Tester le buzzer", "Activer", ControlColor::Carrot, 4, [](Control *sender, int type) {
+        if (type == B_UP) {
+            activateBuzzer();
+            delay(1000);
+            deactivateBuzzer();
+        }
+    });
+
+    // Bouton pour tester les servos
+    ESPUI.addControl(ControlType::Button, "Tester les servos", "Tester", ControlColor::Wetasphalt, 5, [](Control *sender, int type) {
+        if (type == B_UP) {
+            rotateServos();
+        }
+    });
 }
 
 void setup() {
