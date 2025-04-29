@@ -56,3 +56,5 @@ public:
         return alarms;
     }
 };
+
+// Implémentation des méthodes de AlarmManager
