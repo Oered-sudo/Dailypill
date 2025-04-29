@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <vector>
 
+
 /**
  * Structure représentant une alarme.
  */
