@@ -1,70 +1,28 @@
-#ifndef ALARMMANAGER_H
-#define ALARMMANAGER_H
-
-// Prevent multiple inclusions of this header file
-#pragma once
+#ifndef ALARM_MANAGER_H
+#define ALARM_MANAGER_H
 
 #include <Arduino.h>
 #include <vector>
+#include <string>
 
-
-/**
- * Structure représentant une alarme.
- */
-struct Alarm {
+struct AlarmData {
     String name;
     int hour;
     int minute;
-    bool active; // Indique si l'alarme est active
+    bool active;
 };
 
-/**
- * Classe pour gérer les alarmes.
- */
 class AlarmManager {
-public:
-    /**
-     * Ajoute une nouvelle alarme.
-     * @param name Nom de l'alarme.
-     * @param hour Heure de l'alarme.
-     * @param minute Minute de l'alarme.
-     */
-    void addAlarm(const String& name, int hour, int minute);
-
-    /**
-     * Supprime une alarme par son index.
-     * @param index Index de l'alarme à supprimer.
-     */
-    void removeAlarm(int index);
-
-    /**
-     * Met à jour une alarme existante.
-     * @param index Index de l'alarme à mettre à jour.
-     * @param name Nouveau nom de l'alarme.
-     * @param hour Nouvelle heure de l'alarme.
-     * @param minute Nouvelle minute de l'alarme.
-     */
-    void updateAlarm(int index, const String& name, int hour, int minute);
-
-    /**
-     * Vérifie les alarmes actives et déclenche celles qui doivent l'être.
-     */
-    void checkAlarms();
-
-    /**
-     * Retourne la liste des alarmes.
-     * @return Un vecteur contenant toutes les alarmes.
-     */
-    const std::vector<Alarm>& getAlarms() const;
-
 private:
-    /**
-     * Déclenche une alarme.
-     * @param alarm L'alarme à déclencher.
-     */
-    void triggerAlarm(const Alarm& alarm);
+    std::vector<AlarmData> alarms;
 
-    std::vector<Alarm> alarms; // Liste des alarmes
+public:
+    void addAlarm(const String& name, int hour, int minute);
+    void removeAlarm(int index);
+    void updateAlarm(int index, const String& name, int hour, int minute);
+    void checkAlarms();
+    void triggerAlarm(const AlarmData& alarm);
+    const std::vector<AlarmData>& getAlarms() const;
 };
 
-#endif // ALARMMANAGER_H
+#endif // ALARM_MANAGER_H
