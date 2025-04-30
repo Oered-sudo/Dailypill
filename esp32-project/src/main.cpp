@@ -7,7 +7,6 @@
 #include <SSD1306Wire.h>
 #include <LittleFS.h> // Inclure LittleFS
 #include "AlarmManager.h"
-#include "Display.h" // Inclure le fichier d'en-tête pour l'écran OLED
 
 // Configuration du point d'accès Wi-Fi
 const char* ssid = "ESP32-Dashboard";
