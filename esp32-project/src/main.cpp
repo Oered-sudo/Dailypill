@@ -4,11 +4,12 @@
 #include "Display.h"
 #include "AlarmManager.h"
 #include <WiFi.h>
-#include <ESPUI.h>
-#include "lfs.h"
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <ESP-DASH.h>
 
 // Configuration du point d'accès
-const char* ssid = "ESP32-Alarm"; // Nom du réseau Wi-Fi
+const char* ssid = "ESP32-Dashboard"; // Nom du réseau Wi-Fi
 const char* password = "12345678"; // Mot de passe (au moins 8 caractères)
 
 // Broche du buzzer
@@ -23,6 +24,15 @@ const int pirPin = 33;
 
 // Gestionnaire d'alarmes
 AlarmManager alarmManager;
+
+// Serveur Web et tableau de bord
+AsyncWebServer server(80);
+Dashboard dashboard(&server);
+
+// Widgets
+Card temperatureCard("Température", "°C");
+Card humidityCard("Humidité", "%");
+Button toggleButton("Activer/Désactiver", true);
 
 // Fonction pour activer le buzzer
 void activateBuzzer() {
@@ -54,50 +64,6 @@ void rotateServos() {
     }
 }
 
-// Callback pour ajouter une alarme via ESPUI
-void addAlarmCallback(Control *sender, int type) {
-    if (type == B_UP) {
-        String alarmName = ESPUI.getControl(1)->value;
-        String alarmTime = ESPUI.getControl(2)->value;
-
-        int hour = alarmTime.substring(0, 2).toInt();
-        int minute = alarmTime.substring(3, 5).toInt();
-
-        alarmManager.addAlarm(alarmName, hour, minute);
-        Serial.printf("Alarme ajoutée : %s à %02d:%02d\n", alarmName.c_str(), hour, minute);
-    }
-}
-
-// Initialisation de l'interface ESPUI
-void setupESPUI() {
-    ESPUI.begin("ESP32 Alarm Manager");
-
-    // Champ pour le nom de l'alarme
-    ESPUI.addControl(ControlType::Text, "Nom de l'alarme", "", ControlColor::Turquoise, 1);
-
-    // Champ pour l'heure de l'alarme
-    ESPUI.addControl(ControlType::Text, "Heure (HH:MM)", "", ControlColor::Turquoise, 2);
-
-    // Bouton pour ajouter une alarme
-    ESPUI.addControl(ControlType::Button, "Ajouter une alarme", "Ajouter", ControlColor::Emerald, 3, addAlarmCallback);
-
-    // Bouton pour tester le buzzer
-    ESPUI.addControl(ControlType::Button, "Tester le buzzer", "Activer", ControlColor::Carrot, 4, [](Control *sender, int type) {
-        if (type == B_UP) {
-            activateBuzzer();
-            delay(1000);
-            deactivateBuzzer();
-        }
-    });
-
-    // Bouton pour tester les servos
-    ESPUI.addControl(ControlType::Button, "Tester les servos", "Tester", ControlColor::Wetasphalt, 5, [](Control *sender, int type) {
-        if (type == B_UP) {
-            rotateServos();
-        }
-    });
-}
-
 void setup() {
     Serial.begin(115200);
     Wire.begin();
@@ -124,8 +90,18 @@ void setup() {
     Serial.print("Adresse IP : ");
     Serial.println(WiFi.softAPIP());
 
-    // Initialisation de l'interface ESPUI
-    setupESPUI();
+    // Configuration des widgets
+    dashboard.addCard(temperatureCard);
+    dashboard.addCard(humidityCard);
+    dashboard.addButton(toggleButton);
+
+    // Gestionnaire pour le bouton
+    toggleButton.attachCallback([](bool state) {
+        Serial.printf("Bouton activé : %s\n", state ? "ON" : "OFF");
+    });
+
+    // Démarrage du serveur
+    server.begin();
 }
 
 void loop() {
@@ -152,6 +128,16 @@ void loop() {
         alarmNames[i] = alarms[i].name;
     }
     updateDisplay(alarmNames, alarms.size());
+
+    // Simule des données pour les widgets
+    static float temperature = 25.0;
+    static float humidity = 50.0;
+
+    temperature += random(-10, 10) * 0.1;
+    humidity += random(-5, 5) * 0.1;
+
+    temperatureCard.update(temperature);
+    humidityCard.update(humidity);
 
     delay(1000);
 }
