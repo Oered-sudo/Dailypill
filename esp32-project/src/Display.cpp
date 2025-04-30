@@ -1,4 +1,5 @@
 #include "Display.h"
+#include "lfs.h"
 #include <Wire.h>
 #include <SSD1306Wire.h> // Remplace Adafruit_SSD1306 par SSD1306Wire
 

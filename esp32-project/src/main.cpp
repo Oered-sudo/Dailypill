@@ -5,6 +5,7 @@
 #include "AlarmManager.h"
 #include <WiFi.h>
 #include <ESPUI.h>
+#include "lfs.h"
 
 // Configuration du point d'accès
 const char* ssid = "ESP32-Alarm"; // Nom du réseau Wi-Fi
