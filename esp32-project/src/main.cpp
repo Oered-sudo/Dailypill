@@ -1,16 +1,18 @@
 #include <Arduino.h>
 #include <Wire.h>
-#include <ESP32Servo.h> // Assurez-vous que la bibliothèque est installée
-#include "Display.h"
-#include "AlarmManager.h"
+#include <ESP32Servo.h>
+#include "Display.h" // Ensure this header file exists and contains the required declarations
+#include "AlarmManager.h" // Ensure this header file exists and contains the required declarations
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ESP-DASH.h>
+#include <Card.h>
+
 
 // Configuration du point d'accès
 const char* ssid = "ESP32-Dashboard"; // Nom du réseau Wi-Fi
-const char* password = "12345678"; // Mot de passe (au moins 8 caractères)
+const char* password = "12345678"; // Mot de passe (au moins 8 caractères, modifiez si nécessaire)
 
 // Broche du buzzer
 const int buzzerPin = 25;
@@ -122,8 +124,8 @@ void loop() {
     }
 
     // Mettre à jour l'affichage
-    const auto& alarms = alarmManager.getAlarms();
-    String alarmNames[alarms.size()];
+    const auto alarms = alarmManager.getAlarms(); // Ensure getAlarms() returns a valid iterable object
+    String alarmNames[10]; // Replace with a fixed size or dynamically allocate based on alarms size
     for (size_t i = 0; i < alarms.size(); i++) {
         alarmNames[i] = alarms[i].name;
     }
@@ -133,8 +135,8 @@ void loop() {
     static float temperature = 25.0;
     static float humidity = 50.0;
 
-    temperature += random(-10, 10) * 0.1;
-    humidity += random(-5, 5) * 0.1;
+    temperature += (random(-10, 10) * 0.1f);
+    humidity += (random(-5, 5) * 0.1f);
 
     temperatureCard.update(temperature);
     humidityCard.update(humidity);
