@@ -6,8 +6,8 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <ESP-DASH.h>
-#include <Card.h>
+#include <ESPDash.h>
+
 
 
 // Configuration du point d'accès
