@@ -15,7 +15,7 @@ const char* password = "12345678";
 // Broches des périphériques
 const int buzzerPin = 25;
 const int irSensorPin = 33;
-const int irLedPin = 32; // Nouvelle broche pour la LED IR
+const int irLedPin = 32;
 
 // Configuration des servomoteurs
 Servo servo1, servo2, servo3, servo4;
@@ -39,7 +39,17 @@ bool alarmActive = false;
 int selectedServo = 0;
 
 // Écran OLED
-SSD1306Wire display(0x3C, SDA, SCL); // Adresse I2C par défaut pour SSD1306
+SSD1306Wire display(0x3C, SDA, SCL);
+
+// Définition des états
+enum State {
+    IDLE,               // État d'attente
+    ALARM_ACTIVE,       // Alarme activée
+    IR_DETECTED,        // Réception détectée par le capteur IR
+    FINGERPRINT_VALID   // Empreinte digitale validée
+};
+
+State currentState = IDLE; // État initial
 
 // Fonction pour activer le buzzer
 void activateBuzzer() {
@@ -102,7 +112,7 @@ void setupDashboard() {
         if (state) {
             Serial.println("Empreinte validée !");
             updateDisplay("Empreinte validée !");
-            rotateServo(selectedServo);
+            currentState = FINGERPRINT_VALID;
         }
     });
 
@@ -112,11 +122,11 @@ void setupDashboard() {
         if (alarmActive) {
             Serial.println("Alarme activée !");
             updateDisplay("Alarme activée !");
-            activateBuzzer();
+            currentState = ALARM_ACTIVE;
         } else {
             Serial.println("Alarme désactivée !");
             updateDisplay("Alarme désactivée !");
-            deactivateBuzzer();
+            currentState = IDLE;
         }
     });
 
@@ -167,24 +177,45 @@ void setup() {
 }
 
 void loop() {
-    // Vérifie les alarmes actives
-    alarmManager.checkAlarms();
+    // Machine à états
+    switch (currentState) {
+        case IDLE:
+            // Vérifie si le capteur IR détecte une réception
+            if (digitalRead(irSensorPin) == HIGH) {
+                Serial.println("Réception détectée !");
+                updateDisplay("Réception détectée !");
+                digitalWrite(irLedPin, HIGH); // Allume la LED
+                currentState = IR_DETECTED;
+            } else {
+                digitalWrite(irLedPin, LOW); // Éteint la LED
+            }
+            break;
 
-    // Si une alarme est active, activer le buzzer
-    if (alarmManager.isAlarmActive()) {
-        activateBuzzer();
-    } else {
-        deactivateBuzzer();
+        case ALARM_ACTIVE:
+            activateBuzzer();
+            // Si l'alarme est désactivée, revenir à l'état IDLE
+            if (!alarmActive) {
+                deactivateBuzzer();
+                currentState = IDLE;
+            }
+            break;
+
+        case IR_DETECTED:
+            // Maintenir la LED allumée tant que la réception est détectée
+            if (digitalRead(irSensorPin) == LOW) {
+                Serial.println("Réception terminée !");
+                updateDisplay("Réception terminée !");
+                digitalWrite(irLedPin, LOW); // Éteint la LED
+                currentState = IDLE;
+            }
+            break;
+
+        case FINGERPRINT_VALID:
+            rotateServo(selectedServo);
+            updateDisplay("Servo activé !");
+            currentState = IDLE;
+            break;
     }
 
-    // Vérifie si le capteur IR détecte une réception
-    if (digitalRead(irSensorPin) == HIGH) {
-        Serial.println("Réception détectée !");
-        updateDisplay("Réception détectée !");
-        digitalWrite(irLedPin, HIGH); // Allume la LED
-    } else {
-        digitalWrite(irLedPin, LOW); // Éteint la LED
-    }
-
-    delay(1000);
+    delay(100);
 }
