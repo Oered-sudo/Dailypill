@@ -14,6 +14,8 @@ void setupDisplay() {
     display.clear();
     display.setFont(ArialMT_Plain_10); // Définit une police compatible avec SSD1306Wire
     display.setTextAlignment(TEXT_ALIGN_LEFT);
+    display.drawString(0, 0, "ESP32 Dashboard");
+    display.display();
 }
 
 void displayAlarms(const String* alarmNames, int alarmCount) {

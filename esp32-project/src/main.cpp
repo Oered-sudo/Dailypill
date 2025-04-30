@@ -5,8 +5,9 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SSD1306Wire.h>
-#include "esp_spiffs.h"
+#include <LittleFS.h> // Inclure LittleFS
 #include "AlarmManager.h"
+#include "Display.h" // Inclure le fichier d'en-tête pour l'écran OLED
 
 // Configuration du point d'accès Wi-Fi
 const char* ssid = "ESP32-Dashboard";
@@ -94,7 +95,7 @@ void setupDisplay() {
 void setupWebServer() {
     // Route principale pour servir l'interface utilisateur
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(SPIFFS, "/index.html", "text/html");
+        request->send(LittleFS, "/index.html", "text/html"); // Utiliser LittleFS
     });
 
     // Route pour activer/désactiver l'alarme
@@ -162,6 +163,12 @@ void setup() {
 
     // Configuration de l'écran OLED
     setupDisplay();
+
+    // Initialisation de LittleFS
+    if (!LittleFS.begin()) {
+        Serial.println("Erreur : Impossible de monter LittleFS !");
+        return;
+    }
 
     // Configuration du Wi-Fi
     WiFi.softAP(ssid, password);
