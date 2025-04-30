@@ -5,6 +5,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SSD1306Wire.h>
+#include "esp_spiffs.h"
 #include "AlarmManager.h"
 
 // Configuration du point d'accès Wi-Fi
