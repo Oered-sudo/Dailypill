@@ -4,7 +4,6 @@
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-#include <ESPDash.h>
 #include <SSD1306Wire.h>
 #include "AlarmManager.h"
 
@@ -15,7 +14,7 @@ const char* password = "12345678";
 // Broches des périphériques
 const int buzzerPin = 25;
 const int irSensorPin = 33;
-const int irLedPin = 32; // LED IR pour envoyer un signal
+const int irLedPin = 32;
 
 // Configuration des servomoteurs
 Servo servo1, servo2, servo3, servo4;
@@ -24,52 +23,42 @@ const int servoPins[] = {26, 27, 14, 12};
 // Gestionnaire d'alarmes
 AlarmManager alarmManager;
 
-// Serveur Web et tableau de bord
+// Serveur Web
 AsyncWebServer server(80);
-Dashboard dashboard(&server);
-
-// Widgets pour l'interface web
-Card alarmCard("Alarmes", "Actives");
-Select servoSelect("Sélectionner l'étage");
-Button fingerprintButton("Activer avec empreinte", true);
-Button alarmToggleButton("Activer/Désactiver l'alarme", true);
 
 // Variables globales
 bool alarmActive = false;
 int selectedServo = 0;
+String alarmTime = "00:00";
 
 // Écran OLED
 SSD1306Wire display(0x3C, SDA, SCL);
 
-// Définition des états
-enum State {
-    IDLE,               // État d'attente
-    ALARM_ACTIVE,       // Alarme activée
-    IR_SIGNALING,       // Envoi d'un signal IR
-    FINGERPRINT_VALID   // Empreinte digitale validée
-};
-
-State currentState = IDLE; // État initial
-
 // Fonction pour activer le buzzer
 void activateBuzzer() {
     digitalWrite(buzzerPin, HIGH);
-    updateDisplay("Alarme activée !");
+    display.clear();
+    display.drawString(0, 0, "Alarme activée !");
+    display.display();
 }
 
 // Fonction pour désactiver le buzzer
 void deactivateBuzzer() {
     digitalWrite(buzzerPin, LOW);
-    updateDisplay("Alarme désactivée !");
+    display.clear();
+    display.drawString(0, 0, "Alarme désactivée !");
+    display.display();
 }
 
 // Fonction pour envoyer un signal IR
 void sendIrSignal() {
-    digitalWrite(irLedPin, HIGH); // Active la LED IR
-    delay(100);                   // Maintient le signal pendant 100 ms
-    digitalWrite(irLedPin, LOW);  // Désactive la LED IR
+    digitalWrite(irLedPin, HIGH);
+    delay(100);
+    digitalWrite(irLedPin, LOW);
     Serial.println("Signal IR envoyé !");
-    updateDisplay("Signal IR envoyé !");
+    display.clear();
+    display.drawString(0, 0, "Signal IR envoyé !");
+    display.display();
 }
 
 // Fonction pour faire tourner un servo spécifique
@@ -84,7 +73,9 @@ void rotateServo(int servoIndex) {
             servos[servoIndex]->write(angle);
             delay(15);
         }
-        updateDisplay("Servo activé !");
+        display.clear();
+        display.drawString(0, 0, "Servo activé !");
+        display.display();
     }
 }
 
@@ -98,56 +89,55 @@ void setupDisplay() {
     display.display();
 }
 
-// Fonction pour mettre à jour l'écran OLED
-void updateDisplay(const String& message) {
-    display.clear();
-    display.drawString(0, 0, "ESP32 Dashboard");
-    display.drawString(0, 20, message);
-    display.display();
-}
-
-// Fonction pour configurer l'interface web
-void setupDashboard() {
-    // Ajouter les widgets au tableau de bord
-    dashboard.addCard(alarmCard);
-    dashboard.addSelect(servoSelect);
-    dashboard.addButton(fingerprintButton);
-    dashboard.addButton(alarmToggleButton);
-
-    // Ajouter des options pour sélectionner l'étage
-    servoSelect.addOption("Étage 1", "0");
-    servoSelect.addOption("Étage 2", "1");
-    servoSelect.addOption("Étage 3", "2");
-    servoSelect.addOption("Étage 4", "3");
-
-    // Gestionnaire pour le bouton d'empreinte digitale
-    fingerprintButton.attachCallback([](bool state) {
-        if (state) {
-            Serial.println("Empreinte validée !");
-            updateDisplay("Empreinte validée !");
-            currentState = FINGERPRINT_VALID;
-        }
+// Fonction pour configurer le serveur web
+void setupWebServer() {
+    // Route principale pour servir l'interface utilisateur
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(SPIFFS, "/index.html", "text/html");
     });
 
-    // Gestionnaire pour le bouton d'alarme
-    alarmToggleButton.attachCallback([](bool state) {
-        alarmActive = state;
+    // Route pour activer/désactiver l'alarme
+    server.on("/toggleAlarm", HTTP_POST, [](AsyncWebServerRequest *request) {
         if (alarmActive) {
-            Serial.println("Alarme activée !");
-            currentState = ALARM_ACTIVE;
+            deactivateBuzzer();
+            alarmActive = false;
         } else {
-            Serial.println("Alarme désactivée !");
-            currentState = IDLE;
+            activateBuzzer();
+            alarmActive = true;
         }
+        request->send(200, "text/plain", "OK");
     });
 
-    // Gestionnaire pour la sélection de l'étage
-    servoSelect.attachCallback([](String value) {
-        selectedServo = value.toInt();
-        String message = "Étage sélectionné : " + String(selectedServo + 1);
-        Serial.println(message);
-        updateDisplay(message);
+    // Route pour sélectionner un étage
+    server.on("/selectServo", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (request->hasParam("servo", true)) {
+            selectedServo = request->getParam("servo", true)->value().toInt();
+            rotateServo(selectedServo);
+        }
+        request->send(200, "text/plain", "OK");
     });
+
+    // Route pour envoyer un signal IR
+    server.on("/sendIrSignal", HTTP_POST, [](AsyncWebServerRequest *request) {
+        sendIrSignal();
+        request->send(200, "text/plain", "OK");
+    });
+
+    // Route pour configurer l'heure de l'alarme
+    server.on("/setAlarm", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (request->hasParam("time", true)) {
+            alarmTime = request->getParam("time", true)->value();
+            Serial.println("Alarme configurée à : " + alarmTime);
+            display.clear();
+            display.drawString(0, 0, "Alarme configurée :");
+            display.drawString(0, 20, alarmTime);
+            display.display();
+        }
+        request->send(200, "text/plain", "OK");
+    });
+
+    // Démarrer le serveur
+    server.begin();
 }
 
 void setup() {
@@ -167,7 +157,7 @@ void setup() {
     // Initialisation du capteur IR et de la LED IR
     pinMode(irSensorPin, INPUT);
     pinMode(irLedPin, OUTPUT);
-    digitalWrite(irLedPin, LOW); // Assurez-vous que la LED IR est éteinte au démarrage
+    digitalWrite(irLedPin, LOW);
 
     // Configuration de l'écran OLED
     setupDisplay();
@@ -180,44 +170,20 @@ void setup() {
     Serial.print("Adresse IP : ");
     Serial.println(WiFi.softAPIP());
 
-    // Configuration de l'interface web
-    setupDashboard();
-
-    // Démarrage du serveur
-    server.begin();
+    // Configuration du serveur web
+    setupWebServer();
 }
 
 void loop() {
-    // Machine à états
-    switch (currentState) {
-        case IDLE:
-            // Vérifie si le capteur IR détecte une réception
-            if (digitalRead(irSensorPin) == HIGH) {
-                Serial.println("Réception détectée !");
-                updateDisplay("Réception détectée !");
-                currentState = IR_SIGNALING;
-            }
-            break;
+    // Vérifie si l'heure actuelle correspond à l'heure de l'alarme
+    time_t now = time(nullptr);
+    struct tm* timeInfo = localtime(&now);
+    char currentTime[6];
+    strftime(currentTime, sizeof(currentTime), "%H:%M", timeInfo);
 
-        case ALARM_ACTIVE:
-            activateBuzzer();
-            // Si l'alarme est désactivée, revenir à l'état IDLE
-            if (!alarmActive) {
-                deactivateBuzzer();
-                currentState = IDLE;
-            }
-            break;
-
-        case IR_SIGNALING:
-            sendIrSignal(); // Envoie un signal IR
-            currentState = IDLE; // Retourne à l'état IDLE après l'envoi
-            break;
-
-        case FINGERPRINT_VALID:
-            rotateServo(selectedServo);
-            currentState = IDLE;
-            break;
+    if (alarmActive && String(currentTime) == alarmTime) {
+        activateBuzzer();
     }
 
-    delay(100);
+    delay(1000);
 }
