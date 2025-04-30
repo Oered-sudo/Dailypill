@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        button, input, select {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ESP32 Dashboard</h1>
+    <button onclick="toggleAlarm()">Activer/Désactiver Alarme</button>
+    <br>
+    <select id="servoSelect">
+        <option value="0">Étage 1</option>
+        <option value="1">Étage 2</option>
+        <option value="2">Étage 3</option>
+        <option value="3">Étage 4</option>
+    </select>
+    <button onclick="selectServo()">Activer Servo</button>
+    <br>
+    <button onclick="sendIrSignal()">Envoyer Signal IR</button>
+    <br>
+    <input type="time" id="alarmTime">
+    <button onclick="setAlarm()">Configurer Alarme</button>
+
+    <script>
+        function toggleAlarm() {
+            fetch('/toggleAlarm', { method: 'POST' });
+        }
+
+        function selectServo() {
+            const servo = document.getElementById('servoSelect').value;
+            fetch(`/selectServo?servo=${servo}`, { method: 'POST' });
+        }
+
+        function sendIrSignal() {
+            fetch('/sendIrSignal', { method: 'POST' });
+        }
+
+        function setAlarm() {
+            const time = document.getElementById('alarmTime').value;
+            fetch(`/setAlarm?time=${time}`, { method: 'POST' });
+        }
+    </script>
+</body>
+</html>
