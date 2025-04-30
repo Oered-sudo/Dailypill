@@ -15,7 +15,7 @@ const char* password = "12345678";
 // Broches des périphériques
 const int buzzerPin = 25;
 const int irSensorPin = 33;
-const int irLedPin = 32;
+const int irLedPin = 32; // LED IR pour envoyer un signal
 
 // Configuration des servomoteurs
 Servo servo1, servo2, servo3, servo4;
@@ -45,7 +45,7 @@ SSD1306Wire display(0x3C, SDA, SCL);
 enum State {
     IDLE,               // État d'attente
     ALARM_ACTIVE,       // Alarme activée
-    IR_DETECTED,        // Réception détectée par le capteur IR
+    IR_SIGNALING,       // Envoi d'un signal IR
     FINGERPRINT_VALID   // Empreinte digitale validée
 };
 
@@ -54,11 +54,22 @@ State currentState = IDLE; // État initial
 // Fonction pour activer le buzzer
 void activateBuzzer() {
     digitalWrite(buzzerPin, HIGH);
+    updateDisplay("Alarme activée !");
 }
 
 // Fonction pour désactiver le buzzer
 void deactivateBuzzer() {
     digitalWrite(buzzerPin, LOW);
+    updateDisplay("Alarme désactivée !");
+}
+
+// Fonction pour envoyer un signal IR
+void sendIrSignal() {
+    digitalWrite(irLedPin, HIGH); // Active la LED IR
+    delay(100);                   // Maintient le signal pendant 100 ms
+    digitalWrite(irLedPin, LOW);  // Désactive la LED IR
+    Serial.println("Signal IR envoyé !");
+    updateDisplay("Signal IR envoyé !");
 }
 
 // Fonction pour faire tourner un servo spécifique
@@ -73,6 +84,7 @@ void rotateServo(int servoIndex) {
             servos[servoIndex]->write(angle);
             delay(15);
         }
+        updateDisplay("Servo activé !");
     }
 }
 
@@ -89,7 +101,8 @@ void setupDisplay() {
 // Fonction pour mettre à jour l'écran OLED
 void updateDisplay(const String& message) {
     display.clear();
-    display.drawString(0, 0, message);
+    display.drawString(0, 0, "ESP32 Dashboard");
+    display.drawString(0, 20, message);
     display.display();
 }
 
@@ -121,11 +134,9 @@ void setupDashboard() {
         alarmActive = state;
         if (alarmActive) {
             Serial.println("Alarme activée !");
-            updateDisplay("Alarme activée !");
             currentState = ALARM_ACTIVE;
         } else {
             Serial.println("Alarme désactivée !");
-            updateDisplay("Alarme désactivée !");
             currentState = IDLE;
         }
     });
@@ -153,10 +164,10 @@ void setup() {
     pinMode(buzzerPin, OUTPUT);
     deactivateBuzzer();
 
-    // Initialisation du capteur IR et de la LED
+    // Initialisation du capteur IR et de la LED IR
     pinMode(irSensorPin, INPUT);
     pinMode(irLedPin, OUTPUT);
-    digitalWrite(irLedPin, LOW); // Assurez-vous que la LED est éteinte au démarrage
+    digitalWrite(irLedPin, LOW); // Assurez-vous que la LED IR est éteinte au démarrage
 
     // Configuration de l'écran OLED
     setupDisplay();
@@ -184,10 +195,7 @@ void loop() {
             if (digitalRead(irSensorPin) == HIGH) {
                 Serial.println("Réception détectée !");
                 updateDisplay("Réception détectée !");
-                digitalWrite(irLedPin, HIGH); // Allume la LED
-                currentState = IR_DETECTED;
-            } else {
-                digitalWrite(irLedPin, LOW); // Éteint la LED
+                currentState = IR_SIGNALING;
             }
             break;
 
@@ -200,19 +208,13 @@ void loop() {
             }
             break;
 
-        case IR_DETECTED:
-            // Maintenir la LED allumée tant que la réception est détectée
-            if (digitalRead(irSensorPin) == LOW) {
-                Serial.println("Réception terminée !");
-                updateDisplay("Réception terminée !");
-                digitalWrite(irLedPin, LOW); // Éteint la LED
-                currentState = IDLE;
-            }
+        case IR_SIGNALING:
+            sendIrSignal(); // Envoie un signal IR
+            currentState = IDLE; // Retourne à l'état IDLE après l'envoi
             break;
 
         case FINGERPRINT_VALID:
             rotateServo(selectedServo);
-            updateDisplay("Servo activé !");
             currentState = IDLE;
             break;
     }
