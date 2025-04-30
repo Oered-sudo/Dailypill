@@ -1,28 +1,25 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <ESP32Servo.h>
-#include "Display.h" // Ensure this header file exists and contains the required declarations
-#include "AlarmManager.h" // Ensure this header file exists and contains the required declarations
 #include <WiFi.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <ESPDash.h>
+#include <SSD1306Wire.h>
+#include "AlarmManager.h"
 
+// Configuration du point d'accès Wi-Fi
+const char* ssid = "ESP32-Dashboard";
+const char* password = "12345678";
 
-
-// Configuration du point d'accès
-const char* ssid = "ESP32-Dashboard"; // Nom du réseau Wi-Fi
-const char* password = "12345678"; // Mot de passe (au moins 8 caractères, modifiez si nécessaire)
-
-// Broche du buzzer
+// Broches des périphériques
 const int buzzerPin = 25;
+const int irSensorPin = 33;
+const int irLedPin = 32; // Nouvelle broche pour la LED IR
 
 // Configuration des servomoteurs
-Servo servo1, servo2, servo3, servo4; // Déclaration des objets Servo
-const int servoPins[] = {26, 27, 14, 12}; // Broches des servos
-
-// Configuration du capteur PIR
-const int pirPin = 33;
+Servo servo1, servo2, servo3, servo4;
+const int servoPins[] = {26, 27, 14, 12};
 
 // Gestionnaire d'alarmes
 AlarmManager alarmManager;
@@ -31,10 +28,18 @@ AlarmManager alarmManager;
 AsyncWebServer server(80);
 Dashboard dashboard(&server);
 
-// Widgets
-Card temperatureCard("Température", "°C");
-Card humidityCard("Humidité", "%");
-Button toggleButton("Activer/Désactiver", true);
+// Widgets pour l'interface web
+Card alarmCard("Alarmes", "Actives");
+Select servoSelect("Sélectionner l'étage");
+Button fingerprintButton("Activer avec empreinte", true);
+Button alarmToggleButton("Activer/Désactiver l'alarme", true);
+
+// Variables globales
+bool alarmActive = false;
+int selectedServo = 0;
+
+// Écran OLED
+SSD1306Wire display(0x3C, SDA, SCL); // Adresse I2C par défaut pour SSD1306
 
 // Fonction pour activer le buzzer
 void activateBuzzer() {
@@ -46,30 +51,87 @@ void deactivateBuzzer() {
     digitalWrite(buzzerPin, LOW);
 }
 
-// Fonction pour faire tourner les servomoteurs
-void rotateServos() {
-    for (int i = 0; i < 2; i++) {
+// Fonction pour faire tourner un servo spécifique
+void rotateServo(int servoIndex) {
+    Servo* servos[] = {&servo1, &servo2, &servo3, &servo4};
+    if (servoIndex >= 0 && servoIndex < 4) {
         for (int angle = 0; angle <= 180; angle += 10) {
-            servo1.write(angle);
-            servo2.write(angle);
-            servo3.write(angle);
-            servo4.write(angle);
+            servos[servoIndex]->write(angle);
             delay(15);
         }
         for (int angle = 180; angle >= 0; angle -= 10) {
-            servo1.write(angle);
-            servo2.write(angle);
-            servo3.write(angle);
-            servo4.write(angle);
+            servos[servoIndex]->write(angle);
             delay(15);
         }
     }
 }
 
+// Fonction pour configurer l'écran OLED
+void setupDisplay() {
+    display.init();
+    display.clear();
+    display.setFont(ArialMT_Plain_10);
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
+    display.drawString(0, 0, "ESP32 Dashboard");
+    display.display();
+}
+
+// Fonction pour mettre à jour l'écran OLED
+void updateDisplay(const String& message) {
+    display.clear();
+    display.drawString(0, 0, message);
+    display.display();
+}
+
+// Fonction pour configurer l'interface web
+void setupDashboard() {
+    // Ajouter les widgets au tableau de bord
+    dashboard.addCard(alarmCard);
+    dashboard.addSelect(servoSelect);
+    dashboard.addButton(fingerprintButton);
+    dashboard.addButton(alarmToggleButton);
+
+    // Ajouter des options pour sélectionner l'étage
+    servoSelect.addOption("Étage 1", "0");
+    servoSelect.addOption("Étage 2", "1");
+    servoSelect.addOption("Étage 3", "2");
+    servoSelect.addOption("Étage 4", "3");
+
+    // Gestionnaire pour le bouton d'empreinte digitale
+    fingerprintButton.attachCallback([](bool state) {
+        if (state) {
+            Serial.println("Empreinte validée !");
+            updateDisplay("Empreinte validée !");
+            rotateServo(selectedServo);
+        }
+    });
+
+    // Gestionnaire pour le bouton d'alarme
+    alarmToggleButton.attachCallback([](bool state) {
+        alarmActive = state;
+        if (alarmActive) {
+            Serial.println("Alarme activée !");
+            updateDisplay("Alarme activée !");
+            activateBuzzer();
+        } else {
+            Serial.println("Alarme désactivée !");
+            updateDisplay("Alarme désactivée !");
+            deactivateBuzzer();
+        }
+    });
+
+    // Gestionnaire pour la sélection de l'étage
+    servoSelect.attachCallback([](String value) {
+        selectedServo = value.toInt();
+        String message = "Étage sélectionné : " + String(selectedServo + 1);
+        Serial.println(message);
+        updateDisplay(message);
+    });
+}
+
 void setup() {
     Serial.begin(115200);
     Wire.begin();
-    setupDisplay();
 
     // Initialisation des servomoteurs
     servo1.attach(servoPins[0]);
@@ -81,8 +143,13 @@ void setup() {
     pinMode(buzzerPin, OUTPUT);
     deactivateBuzzer();
 
-    // Initialisation du capteur PIR
-    pinMode(pirPin, INPUT);
+    // Initialisation du capteur IR et de la LED
+    pinMode(irSensorPin, INPUT);
+    pinMode(irLedPin, OUTPUT);
+    digitalWrite(irLedPin, LOW); // Assurez-vous que la LED est éteinte au démarrage
+
+    // Configuration de l'écran OLED
+    setupDisplay();
 
     // Configuration du Wi-Fi
     WiFi.softAP(ssid, password);
@@ -92,15 +159,8 @@ void setup() {
     Serial.print("Adresse IP : ");
     Serial.println(WiFi.softAPIP());
 
-    // Configuration des widgets
-    dashboard.addCard(temperatureCard);
-    dashboard.addCard(humidityCard);
-    dashboard.addButton(toggleButton);
-
-    // Gestionnaire pour le bouton
-    toggleButton.attachCallback([](bool state) {
-        Serial.printf("Bouton activé : %s\n", state ? "ON" : "OFF");
-    });
+    // Configuration de l'interface web
+    setupDashboard();
 
     // Démarrage du serveur
     server.begin();
@@ -115,31 +175,16 @@ void loop() {
         activateBuzzer();
     } else {
         deactivateBuzzer();
-
-        // Si le capteur PIR détecte un mouvement, faire tourner les servos
-        if (digitalRead(pirPin) == HIGH) {
-            Serial.println("Mouvement détecté !");
-            rotateServos();
-        }
     }
 
-    // Mettre à jour l'affichage
-    const auto alarms = alarmManager.getAlarms(); // Ensure getAlarms() returns a valid iterable object
-    String alarmNames[10]; // Replace with a fixed size or dynamically allocate based on alarms size
-    for (size_t i = 0; i < alarms.size(); i++) {
-        alarmNames[i] = alarms[i].name;
+    // Vérifie si le capteur IR détecte une réception
+    if (digitalRead(irSensorPin) == HIGH) {
+        Serial.println("Réception détectée !");
+        updateDisplay("Réception détectée !");
+        digitalWrite(irLedPin, HIGH); // Allume la LED
+    } else {
+        digitalWrite(irLedPin, LOW); // Éteint la LED
     }
-    updateDisplay(alarmNames, alarms.size());
-
-    // Simule des données pour les widgets
-    static float temperature = 25.0;
-    static float humidity = 50.0;
-
-    temperature += (random(-10, 10) * 0.1f);
-    humidity += (random(-5, 5) * 0.1f);
-
-    temperatureCard.update(temperature);
-    humidityCard.update(humidity);
 
     delay(1000);
 }
