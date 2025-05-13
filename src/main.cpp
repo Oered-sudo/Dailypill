@@ -55,7 +55,6 @@ void activateBuzzer() {
     display.drawString(0, 0, "Alarme activée !");
     display.display();
 
-    // Effectuer 2,5 rotations (900°) avec le servo sélectionné
     Servo* servos[] = {&servo1, &servo2, &servo3, &servo4};
     if (selectedServo >= 0 && selectedServo < 4) {
         Servo* servo = servos[selectedServo];
@@ -69,8 +68,7 @@ void activateBuzzer() {
                 delay(15);
             }
         }
-        // Revenir à la position initiale
-        servo->write(0);
+        servo->write(0); // Revenir à la position initiale
     }
 }
 
@@ -93,21 +91,21 @@ void sendIrSignal() {
     display.display();
 }
 
-// Fonction pour faire tourner un servo spécifique
-void rotateServo(int servoIndex) {
-    Servo* servos[] = {&servo1, &servo2, &servo3, &servo4};
-    if (servoIndex >= 0 && servoIndex < 4) {
-        for (int angle = 0; angle <= 180; angle += 10) {
-            servos[servoIndex]->write(angle);
-            delay(15);
-        }
-        for (int angle = 180; angle >= 0; angle -= 10) {
-            servos[servoIndex]->write(angle);
-            delay(15);
-        }
+// Fonction pour vérifier la présence d'une tasse
+bool isCupPresent() {
+    int sensorValue = digitalRead(irSensorPin);
+    if (sensorValue == HIGH) {
+        Serial.println("Tasse détectée !");
         display.clear();
-        display.drawString(0, 0, "Servo activé !");
+        display.drawString(0, 0, "Tasse détectée !");
         display.display();
+        return true;
+    } else {
+        Serial.println("Aucune tasse détectée !");
+        display.clear();
+        display.drawString(0, 0, "Aucune tasse !");
+        display.display();
+        return false;
     }
 }
 
@@ -123,12 +121,10 @@ void setupDisplay() {
 
 // Fonction pour configurer le serveur web
 void setupWebServer() {
-    // Route principale pour servir l'interface utilisateur
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(LittleFS, "/index.html", "text/html"); // Utiliser LittleFS
+        request->send(LittleFS, "/index.html", "text/html");
     });
 
-    // Route pour activer/désactiver l'alarme
     server.on("/toggleAlarm", HTTP_POST, [](AsyncWebServerRequest *request) {
         if (alarmActive) {
             deactivateBuzzer();
@@ -140,22 +136,19 @@ void setupWebServer() {
         request->send(200, "text/plain", "OK");
     });
 
-    // Route pour sélectionner un étage
     server.on("/selectServo", HTTP_POST, [](AsyncWebServerRequest *request) {
         if (request->hasParam("servo", true)) {
             selectedServo = request->getParam("servo", true)->value().toInt();
-            rotateServo(selectedServo);
+            activateBuzzer();
         }
         request->send(200, "text/plain", "OK");
     });
 
-    // Route pour envoyer un signal IR
     server.on("/sendIrSignal", HTTP_POST, [](AsyncWebServerRequest *request) {
         sendIrSignal();
         request->send(200, "text/plain", "OK");
     });
 
-    // Route pour configurer l'heure de l'alarme
     server.on("/setAlarm", HTTP_POST, [](AsyncWebServerRequest *request) {
         if (request->hasParam("time", true)) {
             alarmTime = request->getParam("time", true)->value();
@@ -171,21 +164,22 @@ void setupWebServer() {
         request->send(200, "text/plain", "OK");
     });
 
-    // Démarrer le serveur
     server.begin();
 }
 
+// Fonction pour configurer le capteur d'empreintes
 void setupFingerprintSensor() {
     fingerprintSerial.begin(57600, SERIAL_8N1, FINGERPRINT_RX, FINGERPRINT_TX);
-    finger.begin(57600); // Fournir la vitesse en bauds ici
+    finger.begin(57600);
     if (finger.verifyPassword()) {
         Serial.println("Capteur d'empreintes initialisé !");
     } else {
         Serial.println("Erreur : Impossible d'initialiser le capteur d'empreintes !");
-        while (1); // Bloquer si le capteur ne fonctionne pas
+        while (1);
     }
 }
 
+// Fonction pour vérifier les empreintes digitales
 bool verifyFingerprint() {
     Serial.println("Placez votre doigt sur le capteur...");
     int result = finger.getImage();
@@ -211,79 +205,24 @@ bool verifyFingerprint() {
     }
 }
 
-bool isCupPresent() {
-    int sensorValue = digitalRead(irSensorPin);
-    if (sensorValue == HIGH) { // Si le capteur détecte un objet
-        Serial.println("Tasse détectée !");
-        display.clear();
-        display.drawString(0, 0, "Tasse détectée !");
-        display.display();
-        return true;
-    } else {
-        Serial.println("Aucune tasse détectée !");
-        display.clear();
-        display.drawString(0, 0, "Aucune tasse !");
-        display.display();
-        return false;
-    }
-}
-
-void setupSDCard() {
-    if (!SD.begin(SD_CS_PIN)) {
-        Serial.println("Erreur : Impossible d'initialiser la carte SD !");
-        return;
-    }
-    Serial.println("Carte SD initialisée avec succès !");
-}
-
-void saveAlarmTime(const String& time) {
-    File file = SD.open("/alarm.txt", FILE_WRITE);
-    if (file) {
-        file.println(time);
-        file.close();
-        Serial.println("Heure de l'alarme sauvegardée : " + time);
-    } else {
-        Serial.println("Erreur : Impossible de sauvegarder l'heure de l'alarme !");
-    }
-}
-
-String loadAlarmTime() {
-    File file = SD.open("/alarm.txt", FILE_READ);
-    if (file) {
-        String time = file.readStringUntil('\n');
-        file.close();
-        time.trim(); // Supprimer les espaces ou sauts de ligne
-        Serial.println("Heure de l'alarme chargée : " + time);
-        return time;
-    } else {
-        Serial.println("Erreur : Impossible de lire l'heure de l'alarme !");
-        return "00:00"; // Valeur par défaut
-    }
-}
-
 void setup() {
     Serial.begin(115200);
     Wire.begin();
 
-    // Initialisation des servomoteurs
     servo1.attach(servoPins[0]);
     servo2.attach(servoPins[1]);
     servo3.attach(servoPins[2]);
     servo4.attach(servoPins[3]);
 
-    // Initialisation du buzzer
     pinMode(buzzerPin, OUTPUT);
     deactivateBuzzer();
 
-    // Initialisation du capteur IR et de la LED IR
     pinMode(irSensorPin, INPUT);
     pinMode(irLedPin, OUTPUT);
     digitalWrite(irLedPin, LOW);
 
-    // Configuration de l'écran OLED
     setupDisplay();
 
-    // Initialisation de LittleFS
     if (!LittleFS.begin()) {
         Serial.println("Erreur : Impossible de monter LittleFS !");
         return;
@@ -295,7 +234,6 @@ void setup() {
     // Charger l'heure de l'alarme depuis la carte SD
     alarmTime = loadAlarmTime();
 
-    // Configuration du Wi-Fi
     WiFi.softAP(ssid, password);
     Serial.println("Point d'accès configuré !");
     Serial.print("Nom du réseau : ");
@@ -303,22 +241,17 @@ void setup() {
     Serial.print("Adresse IP : ");
     Serial.println(WiFi.softAPIP());
 
-    // Configuration du serveur web
     setupWebServer();
-
-    // Configuration du capteur d'empreintes
     setupFingerprintSensor();
 }
 
 void loop() {
-    // Vérifie si l'heure actuelle correspond à l'heure de l'alarme
     time_t now = time(nullptr);
     struct tm* timeInfo = localtime(&now);
     char currentTime[6];
     strftime(currentTime, sizeof(currentTime), "%H:%M", timeInfo);
 
     if (alarmActive && String(currentTime) == alarmTime) {
-        // Vérifie si une tasse est présente avant d'activer le buzzer
         if (isCupPresent()) {
             activateBuzzer();
         } else {
@@ -327,14 +260,12 @@ void loop() {
         }
     }
 
-    // Vérifie les empreintes digitales
     if (verifyFingerprint()) {
         Serial.println("Empreinte reconnue : accès autorisé !");
-        // Ajoutez ici les actions à effectuer en cas de succès
-        deactivateBuzzer(); // Exemple : désactiver l'alarme si l'empreinte est reconnue
+        deactivateBuzzer();
     } else {
         Serial.println("Empreinte non reconnue ou absente.");
     }
 
-    delay(1000); // Attendre avant la prochaine vérification
+    delay(1000);
 }
