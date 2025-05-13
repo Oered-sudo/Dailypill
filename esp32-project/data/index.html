@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Dashboard</title>
+    <title>Dailypill Dashboard</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -16,26 +16,44 @@
             margin: 10px;
             font-size: 16px;
         }
+        #alarmList {
+            margin-top: 20px;
+            text-align: left;
+            display: inline-block;
+        }
+        .alarm-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
     <h1>ESP32 Dashboard</h1>
-    <button onclick="toggleAlarm()">Activer/Désactiver Alarme</button>
-    <br>
-    <select id="servoSelect">
+    <select id="daySelect">
+        <option value="Monday">Lundi</option>
+        <option value="Tuesday">Mardi</option>
+        <option value="Wednesday">Mercredi</option>
+        <option value="Thursday">Jeudi</option>
+        <option value="Friday">Vendredi</option>
+        <option value="Saturday">Samedi</option>
+        <option value="Sunday">Dimanche</option>
+    </select>
+    <input type="time" id="alarmTime">
+    <select id="servoStage">
         <option value="0">Étage 1</option>
         <option value="1">Étage 2</option>
         <option value="2">Étage 3</option>
         <option value="3">Étage 4</option>
     </select>
-    <button onclick="selectServo()">Activer Servo</button>
-    <br>
-    <button onclick="sendIrSignal()">Envoyer Signal IR</button>
-    <br>
-    <input type="time" id="alarmTime">
     <button onclick="setAlarm()">Configurer Alarme</button>
 
+    <h2>Alarmes programmées</h2>
+    <div id="alarmList"></div>
+
     <script>
+        const alarms = []; // Tableau global pour stocker les alarmes
+
         function toggleAlarm() {
             fetch('/toggleAlarm', { method: 'POST' });
         }
@@ -50,9 +68,61 @@
         }
 
         function setAlarm() {
+            const day = document.getElementById('daySelect').value;
             const time = document.getElementById('alarmTime').value;
-            fetch(`/setAlarm?time=${time}`, { method: 'POST' });
+            const stage = document.getElementById('servoStage').value;
+
+            // Vérifier si le nombre d'alarmes pour ce jour dépasse 4
+            const alarmsForDay = alarms.filter(alarm => alarm.day === day);
+            if (alarmsForDay.length >= 4) {
+                alert(`Vous ne pouvez pas configurer plus de 4 alarmes pour ${day}.`);
+                return;
+            }
+
+            // Ajouter une nouvelle alarme au tableau
+            alarms.push({ day, time, stage });
+            alert(`Alarme configurée pour ${day} à ${time} à l'étage ${parseInt(stage) + 1}`);
+            updateAlarmList();
         }
+
+        function removeAlarm(index) {
+            alarms.splice(index, 1); // Supprimer l'alarme du tableau
+            updateAlarmList();
+        }
+
+        function updateAlarmList() {
+            const alarmList = document.getElementById('alarmList');
+            alarmList.innerHTML = ''; // Réinitialiser la liste
+
+            alarms.forEach((alarm, index) => {
+                const alarmItem = document.createElement('div');
+                alarmItem.className = 'alarm-item';
+                alarmItem.innerHTML = `
+                    <span>${alarm.day} à ${alarm.time} (Étage ${parseInt(alarm.stage) + 1})</span>
+                    <button onclick="removeAlarm(${index})">Supprimer</button>
+                `;
+                alarmList.appendChild(alarmItem);
+            });
+        }
+
+        function checkAlarms() {
+            const now = new Date();
+            const currentDay = now.toLocaleString('en-US', { weekday: 'long' });
+            const currentTime = now.toTimeString().slice(0, 5); // Format HH:MM
+
+            // Vérifier les alarmes pour le jour actuel
+            alarms.forEach((alarm, index) => {
+                if (alarm.day === currentDay && alarm.time === currentTime) {
+                    fetch(`/selectServo?servo=${alarm.stage}`, { method: 'POST' });
+                    alert(`Alarme activée pour ${currentDay} à ${alarm.time} à l'étage ${parseInt(alarm.stage) + 1} !`);
+                    alarms.splice(index, 1); // Supprimer l'alarme après activation
+                    updateAlarmList();
+                }
+            });
+        }
+
+        // Vérifier les alarmes toutes les secondes
+        setInterval(checkAlarms, 1000);
     </script>
 </body>
 </html>
