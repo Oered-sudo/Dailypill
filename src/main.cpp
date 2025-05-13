@@ -204,6 +204,23 @@ bool verifyFingerprint() {
     }
 }
 
+bool isCupPresent() {
+    int sensorValue = digitalRead(irSensorPin);
+    if (sensorValue == HIGH) { // Si le capteur détecte un objet
+        Serial.println("Tasse détectée !");
+        display.clear();
+        display.drawString(0, 0, "Tasse détectée !");
+        display.display();
+        return true;
+    } else {
+        Serial.println("Aucune tasse détectée !");
+        display.clear();
+        display.drawString(0, 0, "Aucune tasse !");
+        display.display();
+        return false;
+    }
+}
+
 void setup() {
     Serial.begin(115200);
     Wire.begin();
@@ -255,7 +272,13 @@ void loop() {
     strftime(currentTime, sizeof(currentTime), "%H:%M", timeInfo);
 
     if (alarmActive && String(currentTime) == alarmTime) {
-        activateBuzzer();
+        // Vérifie si une tasse est présente avant d'activer le buzzer
+        if (isCupPresent()) {
+            activateBuzzer();
+        } else {
+            Serial.println("Aucune tasse détectée, alarme désactivée !");
+            deactivateBuzzer();
+        }
     }
 
     // Vérifie les empreintes digitales
