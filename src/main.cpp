@@ -8,10 +8,14 @@
 #include <LittleFS.h> // Inclure LittleFS
 #include "AlarmManager.h"
 #include <Adafruit_Fingerprint.h> // Bibliothèque pour le capteur d'empreintes
+#include <SD.h> // Bibliothèque pour la carte SD
 
 // Définir les broches UART pour le capteur GT215
 #define FINGERPRINT_RX 16
 #define FINGERPRINT_TX 17
+
+// Définir la broche CS pour la carte SD
+#define SD_CS_PIN 5
 
 // Initialiser le capteur d'empreintes
 HardwareSerial fingerprintSerial(2); // Utiliser UART2
@@ -160,6 +164,9 @@ void setupWebServer() {
             display.drawString(0, 0, "Alarme configurée :");
             display.drawString(0, 20, alarmTime);
             display.display();
+
+            // Sauvegarder l'heure de l'alarme sur la carte SD
+            saveAlarmTime(alarmTime);
         }
         request->send(200, "text/plain", "OK");
     });
@@ -221,6 +228,39 @@ bool isCupPresent() {
     }
 }
 
+void setupSDCard() {
+    if (!SD.begin(SD_CS_PIN)) {
+        Serial.println("Erreur : Impossible d'initialiser la carte SD !");
+        return;
+    }
+    Serial.println("Carte SD initialisée avec succès !");
+}
+
+void saveAlarmTime(const String& time) {
+    File file = SD.open("/alarm.txt", FILE_WRITE);
+    if (file) {
+        file.println(time);
+        file.close();
+        Serial.println("Heure de l'alarme sauvegardée : " + time);
+    } else {
+        Serial.println("Erreur : Impossible de sauvegarder l'heure de l'alarme !");
+    }
+}
+
+String loadAlarmTime() {
+    File file = SD.open("/alarm.txt", FILE_READ);
+    if (file) {
+        String time = file.readStringUntil('\n');
+        file.close();
+        time.trim(); // Supprimer les espaces ou sauts de ligne
+        Serial.println("Heure de l'alarme chargée : " + time);
+        return time;
+    } else {
+        Serial.println("Erreur : Impossible de lire l'heure de l'alarme !");
+        return "00:00"; // Valeur par défaut
+    }
+}
+
 void setup() {
     Serial.begin(115200);
     Wire.begin();
@@ -248,6 +288,12 @@ void setup() {
         Serial.println("Erreur : Impossible de monter LittleFS !");
         return;
     }
+
+    // Initialisation de la carte SD
+    setupSDCard();
+
+    // Charger l'heure de l'alarme depuis la carte SD
+    alarmTime = loadAlarmTime();
 
     // Configuration du Wi-Fi
     WiFi.softAP(ssid, password);
