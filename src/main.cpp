@@ -170,7 +170,8 @@ void setupWebServer() {
 
 void setupFingerprintSensor() {
     fingerprintSerial.begin(57600, SERIAL_8N1, FINGERPRINT_RX, FINGERPRINT_TX);
-    if (finger.begin()) {
+    finger.begin(57600); // Fournir la vitesse en bauds ici
+    if (finger.verifyPassword()) {
         Serial.println("Capteur d'empreintes initialisé !");
     } else {
         Serial.println("Erreur : Impossible d'initialiser le capteur d'empreintes !");
