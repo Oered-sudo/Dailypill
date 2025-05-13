@@ -5,7 +5,7 @@ This project is designed for the ESP32 platform using PlatformIO. It includes va
 ## Project Structure
 
 ```
-esp32-project
+Dailypill
 ├── include          # Contains header files for the project
 │   └── README      # Information about using header files
 ├── lib             # Contains libraries used in the project

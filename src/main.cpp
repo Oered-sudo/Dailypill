@@ -7,6 +7,15 @@
 #include <SSD1306Wire.h>
 #include <LittleFS.h> // Inclure LittleFS
 #include "AlarmManager.h"
+#include <Adafruit_Fingerprint.h> // Bibliothèque pour le capteur d'empreintes
+
+// Définir les broches UART pour le capteur GT215
+#define FINGERPRINT_RX 16
+#define FINGERPRINT_TX 17
+
+// Initialiser le capteur d'empreintes
+HardwareSerial fingerprintSerial(2); // Utiliser UART2
+Adafruit_Fingerprint finger(&fingerprintSerial);
 
 // Configuration du point d'accès Wi-Fi
 const char* ssid = "ESP32-Dashboard";
@@ -159,6 +168,41 @@ void setupWebServer() {
     server.begin();
 }
 
+void setupFingerprintSensor() {
+    fingerprintSerial.begin(57600, SERIAL_8N1, FINGERPRINT_RX, FINGERPRINT_TX);
+    if (finger.begin()) {
+        Serial.println("Capteur d'empreintes initialisé !");
+    } else {
+        Serial.println("Erreur : Impossible d'initialiser le capteur d'empreintes !");
+        while (1); // Bloquer si le capteur ne fonctionne pas
+    }
+}
+
+bool verifyFingerprint() {
+    Serial.println("Placez votre doigt sur le capteur...");
+    int result = finger.getImage();
+    if (result != FINGERPRINT_OK) {
+        Serial.println("Aucune empreinte détectée !");
+        return false;
+    }
+
+    result = finger.image2Tz();
+    if (result != FINGERPRINT_OK) {
+        Serial.println("Erreur lors de la conversion de l'image !");
+        return false;
+    }
+
+    result = finger.fingerFastSearch();
+    if (result == FINGERPRINT_OK) {
+        Serial.print("Empreinte reconnue, ID : ");
+        Serial.println(finger.fingerID);
+        return true;
+    } else {
+        Serial.println("Empreinte non reconnue !");
+        return false;
+    }
+}
+
 void setup() {
     Serial.begin(115200);
     Wire.begin();
@@ -197,6 +241,9 @@ void setup() {
 
     // Configuration du serveur web
     setupWebServer();
+
+    // Configuration du capteur d'empreintes
+    setupFingerprintSensor();
 }
 
 void loop() {
@@ -210,5 +257,14 @@ void loop() {
         activateBuzzer();
     }
 
-    delay(1000);
+    // Vérifie les empreintes digitales
+    if (verifyFingerprint()) {
+        Serial.println("Empreinte reconnue : accès autorisé !");
+        // Ajoutez ici les actions à effectuer en cas de succès
+        deactivateBuzzer(); // Exemple : désactiver l'alarme si l'empreinte est reconnue
+    } else {
+        Serial.println("Empreinte non reconnue ou absente.");
+    }
+
+    delay(1000); // Attendre avant la prochaine vérification
 }
