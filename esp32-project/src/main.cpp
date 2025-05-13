@@ -35,12 +35,30 @@ String alarmTime = "00:00";
 // Écran OLED
 SSD1306Wire display(0x3C, SDA, SCL);
 
-// Fonction pour activer le buzzer
+// Fonction pour activer le buzzer et effectuer une rotation du servo
 void activateBuzzer() {
     digitalWrite(buzzerPin, HIGH);
     display.clear();
     display.drawString(0, 0, "Alarme activée !");
     display.display();
+
+    // Effectuer 2,5 rotations (900°) avec le servo sélectionné
+    Servo* servos[] = {&servo1, &servo2, &servo3, &servo4};
+    if (selectedServo >= 0 && selectedServo < 4) {
+        Servo* servo = servos[selectedServo];
+        for (int i = 0; i < 5; i++) { // 5 demi-tours
+            for (int angle = 0; angle <= 180; angle += 10) {
+                servo->write(angle);
+                delay(15);
+            }
+            for (int angle = 180; angle >= 0; angle -= 10) {
+                servo->write(angle);
+                delay(15);
+            }
+        }
+        // Revenir à la position initiale
+        servo->write(0);
+    }
 }
 
 // Fonction pour désactiver le buzzer
