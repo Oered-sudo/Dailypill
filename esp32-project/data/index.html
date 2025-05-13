@@ -8,23 +8,68 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f4f4f4;
+            background-color: #e3f2fd; /* Bleu clair */
             color: #333;
+            margin: 0;
+            padding: 0;
         }
-        button, input, select {
+        h1 {
+            background-color: #2196f3; /* Bleu vif */
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #4caf50; /* Vert */
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049; /* Vert foncé */
+        }
+        input, select {
             padding: 10px;
             margin: 10px;
             font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
         #alarmList {
             margin-top: 20px;
             text-align: left;
             display: inline-block;
+            background-color: #ffffff; /* Blanc */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .alarm-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 5px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f1f8e9; /* Vert clair */
+            border: 1px solid #c5e1a5;
+            border-radius: 5px;
+        }
+        .alarm-item button {
+            background-color: #f44336; /* Rouge */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .alarm-item button:hover {
+            background-color: #d32f2f; /* Rouge foncé */
         }
     </style>
 </head>
