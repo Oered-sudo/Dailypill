@@ -1,56 +1,47 @@
-# esp32-alarm-webapp
+# ESP32 Project
 
-Ce projet est une application web pour programmer des alarmes sur un ESP32, avec un affichage sur un écran I2C de 128x64 pixels. L'application est divisée en deux parties principales : le backend (Flask) et le code pour l'ESP32.
+This project is designed for the ESP32 platform using PlatformIO. It includes various components that work together to create a functional application.
 
-## Structure du projet
+## Project Structure
 
-- **backend/** : Contient le code du serveur web qui gère les alarmes et sert l'interface utilisateur.
-  - `app.py` : Point d'entrée de l'application backend.
-  - `templates/index.html` : Interface utilisateur HTML.
-  - `static/styles.css` : Styles CSS pour l'application.
-  - `static/script.js` : Script JavaScript pour gérer les alarmes.
-  - `requirements.txt` : Liste des dépendances nécessaires pour le backend.
+```
+esp32-project
+├── include          # Contains header files for the project
+│   └── README      # Information about using header files
+├── lib             # Contains libraries used in the project
+│   └── README      # Details on libraries and integration
+├── src             # Source files for the application
+│   └── main.cpp    # Entry point of the application
+├── platformio.ini  # Configuration file for PlatformIO
+└── README.md       # Documentation for the project
+```
 
-- **esp32/** : Contient le code pour l'ESP32.
-  - `main/main.cpp` : Point d'entrée du programme pour l'ESP32.
-  - `main/i2c_display.cpp` : Gestion de l'affichage sur l'écran I2C.
-  - `main/alarm_manager.cpp` : Gestion de la logique des alarmes.
-  - `platformio.ini` : Configuration pour PlatformIO.
+## Getting Started
 
-## Installation
+To get started with this project, follow these steps:
 
-1. Clonez le dépôt :
-   ```
-   git clone https://github.com/Oered-sudo/Dailypill
-   ```
+1. **Install PlatformIO**: Make sure you have PlatformIO installed in your development environment.
 
-2. Installez les dépendances du backend :
-   ```
-   cd backend
-   pip install -r requirements.txt
-   ```
+2. **Clone the Repository**: Clone this repository to your local machine.
 
-3. Déployez le code sur l'ESP32 en utilisant PlatformIO :
-   ```
-   cd esp32
-   platformio run --target upload
-   ```
+3. **Open the Project**: Open the project folder in your preferred IDE.
 
-## Utilisation
+4. **Install Dependencies**: Run the PlatformIO command to install the necessary libraries and dependencies defined in `platformio.ini`.
 
-1. Lancez le serveur backend :
-   ```
-   cd backend
-   python app.py
-   ```
+5. **Build the Project**: Use the build command in PlatformIO to compile the project.
 
-2. Ouvrez votre navigateur et accédez à l'URL suivante :
-   ```
-   http://127.0.0.1:5000
-   ```
+6. **Upload to ESP32**: Connect your ESP32 device and upload the compiled firmware.
 
-3. Utilisez l'interface web pour programmer et gérer vos alarmes.
+## Usage
 
-## Contribuer
+- The `include` directory contains header files that can be included in your source files.
+- The `lib` directory contains libraries that can be used to extend the functionality of your application.
+- The `src/main.cpp` file is where the main application logic resides, including the `setup()` and `loop()` functions.
 
-Les contributions sont les bienvenues ! Veuillez soumettre une demande de tirage pour toute amélioration ou correction.
+## Contributing
+
+Feel free to contribute to this project by submitting issues or pull requests. Your contributions are welcome!
+
+## License
+
+This project is licensed under the MIT License. See the LICENSE file for more details.
