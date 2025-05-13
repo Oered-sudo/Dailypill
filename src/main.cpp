@@ -10,8 +10,8 @@
 #include <Adafruit_Fingerprint.h> // Bibliothèque pour le capteur d'empreintes
 
 // Définir les broches UART pour le capteur GT215
-#define FINGERPRINT_RX 16
-#define FINGERPRINT_TX 17
+#define FINGERPRINT_RX 16 // RX2 sur NodeMCU ESP32-WROOM
+#define FINGERPRINT_TX 17 // TX2 sur NodeMCU ESP32-WROOM
 
 // Initialiser le capteur d'empreintes
 HardwareSerial fingerprintSerial(2); // Utiliser UART2
@@ -22,13 +22,13 @@ const char* ssid = "ESP32-Dashboard";
 const char* password = "12345678";
 
 // Broches des périphériques
-const int buzzerPin = 25;
-const int irSensorPin = 33;
-const int irLedPin = 32;
+const int buzzerPin = 23; // Broche GPIO23 pour le buzzer
+const int irSensorPin = 22; // Broche GPIO22 pour le capteur IR
+const int irLedPin = 21; // Broche GPIO21 pour la LED IR
 
 // Configuration des servomoteurs
 Servo servo1, servo2, servo3, servo4;
-const int servoPins[] = {26, 27, 14, 12};
+const int servoPins[] = {19, 18, 5, 4}; // GPIO19, GPIO18, GPIO5, GPIO4 pour les servos
 
 // Gestionnaire d'alarmes
 AlarmManager alarmManager;
@@ -42,7 +42,7 @@ int selectedServo = 0;
 String alarmTime = "00:00";
 
 // Écran OLED
-SSD1306Wire display(0x3C, SDA, SCL);
+SSD1306Wire display(0x3C, SDA, SCL); // SDA et SCL sont généralement GPIO21 et GPIO22 sur NodeMCU ESP32-WROOM
 
 // Fonction pour activer le buzzer et effectuer une rotation du servo
 void activateBuzzer() {
