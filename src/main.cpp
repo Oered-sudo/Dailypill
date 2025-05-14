@@ -5,16 +5,25 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <SSD1306Wire.h>
-#include <LittleFS.h> // Inclure LittleFS
+#include <LittleFS.h>
 #include "AlarmManager.h"
-#include <Adafruit_Fingerprint.h> // Bibliothèque pour le capteur d'empreintes
+#include <Adafruit_Fingerprint.h>
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
 
 // Définir les broches UART pour le capteur GT215
-#define FINGERPRINT_RX 16 // RX2 sur NodeMCU ESP32-WROOM (GPIO16)
-#define FINGERPRINT_TX 17 // TX2 sur NodeMCU ESP32-WROOM (GPIO17)
+#define FINGERPRINT_RX 16
+#define FINGERPRINT_TX 17
+
+// Définir les broches SPI pour la carte SD
+#define SD_MOSI 23
+#define SD_MISO 19
+#define SD_CLK 18
+#define SD_CS 5
 
 // Initialiser le capteur d'empreintes
-HardwareSerial fingerprintSerial(2); // Utiliser UART2
+HardwareSerial fingerprintSerial(2);
 Adafruit_Fingerprint finger(&fingerprintSerial);
 
 // Configuration du point d'accès Wi-Fi
@@ -22,13 +31,13 @@ const char* ssid = "ESP32-Dashboard";
 const char* password = "12345678";
 
 // Broches des périphériques
-const int buzzerPin = 23; // Broche GPIO23 pour le buzzer
-const int irSensorPin = 22; // Broche GPIO22 pour le capteur IR
-const int irLedPin = 21; // Broche GPIO21 pour la LED IR
+const int buzzerPin = 23;
+const int irSensorPin = 22;
+const int irLedPin = 21;
 
 // Configuration des servomoteurs
 Servo servo1, servo2, servo3, servo4;
-const int servoPins[] = {19, 18, 5, 4}; // GPIO19, GPIO18, GPIO5, GPIO4 pour les servos
+const int servoPins[] = {19, 18, 5, 4};
 
 // Gestionnaire d'alarmes
 AlarmManager alarmManager;
@@ -42,7 +51,63 @@ int selectedServo = 0;
 String alarmTime = "00:00";
 
 // Écran OLED
-SSD1306Wire display(0x3C, SDA, SCL); // SDA et SCL sont généralement GPIO21 et GPIO22 sur NodeMCU ESP32-WROOM
+SSD1306Wire display(0x3C, SDA, SCL);
+
+// Fonction pour lister les fichiers sur la carte SD
+void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
+    Serial.printf("Listing directory: %s\n", dirname);
+    File root = fs.open(dirname);
+    if (!root) {
+        Serial.println("Failed to open directory");
+        return;
+    }
+    if (!root.isDirectory()) {
+        Serial.println("Not a directory");
+        return;
+    }
+    File file = root.openNextFile();
+    while (file) {
+        if (file.isDirectory()) {
+            Serial.print("  DIR : ");
+            Serial.println(file.name());
+            if (levels) {
+                listDir(fs, file.name(), levels - 1);
+            }
+        } else {
+            Serial.print("  FILE: ");
+            Serial.print(file.name());
+            Serial.print("  SIZE: ");
+            Serial.println(file.size());
+        }
+        file = root.openNextFile();
+    }
+}
+
+// Fonction pour initialiser la carte SD
+void setupSDCard() {
+    if (!SD.begin(SD_CS)) {
+        Serial.println("Erreur : Impossible de monter la carte SD !");
+        return;
+    }
+    uint8_t cardType = SD.cardType();
+    if (cardType == CARD_NONE) {
+        Serial.println("Aucune carte SD détectée !");
+        return;
+    }
+    Serial.print("Type de carte SD : ");
+    if (cardType == CARD_MMC) {
+        Serial.println("MMC");
+    } else if (cardType == CARD_SD) {
+        Serial.println("SDSC");
+    } else if (cardType == CARD_SDHC) {
+        Serial.println("SDHC");
+    } else {
+        Serial.println("Inconnu");
+    }
+    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+    Serial.printf("Taille de la carte SD : %lluMB\n", cardSize);
+    listDir(SD, "/", 0);
+}
 
 // Fonction pour activer le buzzer et effectuer une rotation du servo
 void activateBuzzer() {
@@ -230,6 +295,7 @@ void setup() {
 
     setupWebServer();
     setupFingerprintSensor();
+    setupSDCard(); // Initialiser la carte SD
 }
 
 void loop() {
