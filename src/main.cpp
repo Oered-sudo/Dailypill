@@ -8,9 +8,9 @@
 #include <LittleFS.h>
 #include "AlarmManager.h"
 #include <Adafruit_Fingerprint.h>
-#include "FS.h"
-#include "SD.h"
-#include "SPI.h"
+#include <FS.h>
+#include <SD.h>
+#include <SPI.h>
 
 // Définir les broches UART pour le capteur GT215
 #define FINGERPRINT_RX 16
@@ -299,26 +299,5 @@ void setup() {
 }
 
 void loop() {
-    time_t now = time(nullptr);
-    struct tm* timeInfo = localtime(&now);
-    char currentTime[6];
-    strftime(currentTime, sizeof(currentTime), "%H:%M", timeInfo);
-
-    if (alarmActive && String(currentTime) == alarmTime) {
-        if (isCupPresent()) {
-            activateBuzzer();
-        } else {
-            Serial.println("Aucune tasse détectée, alarme désactivée !");
-            deactivateBuzzer();
-        }
-    }
-
-    if (verifyFingerprint()) {
-        Serial.println("Empreinte reconnue : accès autorisé !");
-        deactivateBuzzer();
-    } else {
-        Serial.println("Empreinte non reconnue ou absente.");
-    }
-
-    delay(1000);
+    // Boucle principale
 }
