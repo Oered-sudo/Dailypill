@@ -56,7 +56,7 @@ SSD1306Wire display(0x3C, SDA, SCL);
 // Fonction pour lister les fichiers sur la carte SD
 void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
     Serial.printf("Listing directory: %s\n", dirname);
-    File root = fs.open(dirname);
+    fs::File root = fs.open(dirname);
     if (!root) {
         Serial.println("Failed to open directory");
         return;
@@ -65,7 +65,7 @@ void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
         Serial.println("Not a directory");
         return;
     }
-    File file = root.openNextFile();
+    fs::File file = root.openNextFile();
     while (file) {
         if (file.isDirectory()) {
             Serial.print("  DIR : ");
