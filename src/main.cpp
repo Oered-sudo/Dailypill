@@ -37,7 +37,7 @@ const int irLedPin = 21;
 
 // Configuration des servomoteurs
 Servo servo1, servo2, servo3, servo4;
-const int servoPins[] = {19, 18, 5, 4};
+const int servoPins[] = {25, 26, 27, 14}; // GPIO25, GPIO26, GPIO27, GPIO14
 
 // Gestionnaire d'alarmes
 AlarmManager alarmManager;
