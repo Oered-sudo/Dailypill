@@ -10,8 +10,8 @@
 #include <Adafruit_Fingerprint.h> // Bibliothèque pour le capteur d'empreintes
 
 // Définir les broches UART pour le capteur GT215
-#define FINGERPRINT_RX 16 // RX2 sur NodeMCU ESP32-WROOM
-#define FINGERPRINT_TX 17 // TX2 sur NodeMCU ESP32-WROOM
+#define FINGERPRINT_RX 16 // RX2 sur NodeMCU ESP32-WROOM (GPIO16)
+#define FINGERPRINT_TX 17 // TX2 sur NodeMCU ESP32-WROOM (GPIO17)
 
 // Initialiser le capteur d'empreintes
 HardwareSerial fingerprintSerial(2); // Utiliser UART2
