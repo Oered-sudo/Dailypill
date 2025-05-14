@@ -31,7 +31,7 @@ const char* ssid = "ESP32-Dashboard";
 const char* password = "12345678";
 
 // Broches des périphériques
-const int buzzerPin = 23;
+const int buzzerPin = 20;
 const int irSensorPin = 22;
 const int irLedPin = 21;
 
