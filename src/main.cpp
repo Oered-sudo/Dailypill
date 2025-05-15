@@ -82,7 +82,9 @@ void setup() {
     setupFingerprintSensor();
 
     // Ajouter une alarme par défaut
-    alarmManager.addAlarm("Test Alarm", 12, 0);
+    alarms.push_back({"Monday", "08:00", 1});
+    alarms.push_back({"Tuesday", "09:30", 2});
+    alarms.push_back({"Wednesday", "07:45", 3});
 
     // Afficher un message de démarrage
     display.clear();
