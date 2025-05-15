@@ -91,83 +91,54 @@
         <option value="2">Étage 3</option>
         <option value="3">Étage 4</option>
     </select>
-    <button onclick="setAlarm()">Configurer Alarme</button>
+    <button onclick="addAlarm()">Ajouter une alarme</button>
 
     <h2>Alarmes programmées</h2>
     <div id="alarmList"></div>
 
     <script>
-        const alarms = []; // Tableau global pour stocker les alarmes
-
-        function toggleAlarm() {
-            fetch('/toggleAlarm', { method: 'POST' });
-        }
-
-        function selectServo() {
-            const servo = document.getElementById('servoSelect').value;
-            fetch(`/selectServo?servo=${servo}`, { method: 'POST' });
-        }
-
-        function sendIrSignal() {
-            fetch('/sendIrSignal', { method: 'POST' });
-        }
-
-        function setAlarm() {
+        function addAlarm() {
             const day = document.getElementById('daySelect').value;
             const time = document.getElementById('alarmTime').value;
             const stage = document.getElementById('servoStage').value;
 
-            // Vérifier si le nombre d'alarmes pour ce jour dépasse 4
-            const alarmsForDay = alarms.filter(alarm => alarm.day === day);
-            if (alarmsForDay.length >= 4) {
-                alert(`Vous ne pouvez pas configurer plus de 4 alarmes pour ${day}.`);
-                return;
-            }
+            fetch(`/addAlarm?day=${day}&time=${time}&stage=${stage}`, { method: 'POST' })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                    getAlarms();
+                });
+        }
 
-            // Ajouter une nouvelle alarme au tableau
-            alarms.push({ day, time, stage });
-            alert(`Alarme configurée pour ${day} à ${time} à l'étage ${parseInt(stage) + 1}`);
-            updateAlarmList();
+        function getAlarms() {
+            fetch('/getAlarms')
+                .then(response => response.json())
+                .then(data => {
+                    const alarmList = document.getElementById('alarmList');
+                    alarmList.innerHTML = '';
+                    data.forEach((alarm, index) => {
+                        const alarmItem = document.createElement('div');
+                        alarmItem.className = 'alarm-item';
+                        alarmItem.innerHTML = `
+                            <span>${alarm.day} à ${alarm.time} (Étage ${alarm.stage + 1})</span>
+                            <button onclick="removeAlarm(${index})">Supprimer</button>
+                        `;
+                        alarmList.appendChild(alarmItem);
+                    });
+                });
         }
 
         function removeAlarm(index) {
-            alarms.splice(index, 1); // Supprimer l'alarme du tableau
-            updateAlarmList();
+            fetch(`/removeAlarm?index=${index}`, { method: 'POST' })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                    getAlarms();
+                });
         }
 
-        function updateAlarmList() {
-            const alarmList = document.getElementById('alarmList');
-            alarmList.innerHTML = ''; // Réinitialiser la liste
-
-            alarms.forEach((alarm, index) => {
-                const alarmItem = document.createElement('div');
-                alarmItem.className = 'alarm-item';
-                alarmItem.innerHTML = `
-                    <span>${alarm.day} à ${alarm.time} (Étage ${parseInt(alarm.stage) + 1})</span>
-                    <button onclick="removeAlarm(${index})">Supprimer</button>
-                `;
-                alarmList.appendChild(alarmItem);
-            });
-        }
-
-        function checkAlarms() {
-            const now = new Date();
-            const currentDay = now.toLocaleString('en-US', { weekday: 'long' });
-            const currentTime = now.toTimeString().slice(0, 5); // Format HH:MM
-
-            // Vérifier les alarmes pour le jour actuel
-            alarms.forEach((alarm, index) => {
-                if (alarm.day === currentDay && alarm.time === currentTime) {
-                    fetch(`/selectServo?servo=${alarm.stage}`, { method: 'POST' });
-                    alert(`Alarme activée pour ${currentDay} à ${alarm.time} à l'étage ${parseInt(alarm.stage) + 1} !`);
-                    alarms.splice(index, 1); // Supprimer l'alarme après activation
-                    updateAlarmList();
-                }
-            });
-        }
-
-        // Vérifier les alarmes toutes les secondes
-        setInterval(checkAlarms, 1000);
+        // Charger les alarmes au démarrage
+        getAlarms();
     </script>
 </body>
 </html>

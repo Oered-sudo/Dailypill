@@ -44,6 +44,15 @@ String alarmTime = "00:00";
 // Écran OLED
 SSD1306Wire display(0x3C, SDA, SCL);
 
+// Structure pour les alarmes
+struct Alarm {
+    String day;
+    String time;
+    int stage;
+};
+
+std::vector<Alarm> alarms; // Tableau pour stocker les alarmes
+
 // Fonction pour activer le buzzer et effectuer une rotation du servo
 void activateBuzzer() {
     digitalWrite(buzzerPin, HIGH);
@@ -157,6 +166,44 @@ void setupWebServer() {
         request->send(200, "text/plain", "OK");
     });
 
+    server.on("/addAlarm", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (request->hasParam("day", true) && request->hasParam("time", true) && request->hasParam("stage", true)) {
+            String day = request->getParam("day", true)->value();
+            String time = request->getParam("time", true)->value();
+            int stage = request->getParam("stage", true)->value().toInt();
+
+            alarms.push_back({day, time, stage});
+            Serial.println("Alarme ajoutée : " + day + " " + time + " Étape " + String(stage));
+            request->send(200, "text/plain", "Alarme ajoutée !");
+        } else {
+            request->send(400, "text/plain", "Paramètres manquants !");
+        }
+    });
+
+    server.on("/getAlarms", HTTP_GET, [](AsyncWebServerRequest *request) {
+        String response = "[";
+        for (size_t i = 0; i < alarms.size(); i++) {
+            response += "{\"day\":\"" + alarms[i].day + "\",\"time\":\"" + alarms[i].time + "\",\"stage\":" + String(alarms[i].stage) + "}";
+            if (i < alarms.size() - 1) response += ",";
+        }
+        response += "]";
+        request->send(200, "application/json", response);
+    });
+
+    server.on("/removeAlarm", HTTP_POST, [](AsyncWebServerRequest *request) {
+        if (request->hasParam("index", true)) {
+            int index = request->getParam("index", true)->value().toInt();
+            if (index >= 0 && index < alarms.size()) {
+                alarms.erase(alarms.begin() + index);
+                request->send(200, "text/plain", "Alarme supprimée !");
+            } else {
+                request->send(400, "text/plain", "Index invalide !");
+            }
+        } else {
+            request->send(400, "text/plain", "Paramètre manquant !");
+        }
+    });
+
     server.begin();
 }
 
@@ -227,6 +274,41 @@ bool verifyFingerprint() {
     }
 }
 
+void checkAlarms() {
+    time_t now = time(nullptr);
+    struct tm* currentTime = localtime(&now);
+
+    char currentDay[10];
+    strftime(currentDay, sizeof(currentDay), "%A", currentTime); // Jour actuel
+    char currentTimeStr[6];
+    strftime(currentTimeStr, sizeof(currentTimeStr), "%H:%M", currentTime); // Heure actuelle
+
+    for (size_t i = 0; i < alarms.size(); i++) {
+        if (alarms[i].day == String(currentDay) && alarms[i].time == String(currentTimeStr)) {
+            Serial.println("Alarme déclenchée !");
+            activateBuzzer();
+
+            // Activer le servomoteur correspondant
+            Servo* servos[] = {&servo1, &servo2, &servo3, &servo4};
+            if (alarms[i].stage >= 0 && alarms[i].stage < 4) {
+                Servo* servo = servos[alarms[i].stage];
+                servo->write(90); // Tourner le servomoteur à 90°
+                delay(1000);      // Attendre 1 seconde
+                servo->write(0);  // Revenir à la position initiale
+            }
+
+            // Supprimer l'alarme après activation
+            alarms.erase(alarms.begin() + i);
+
+            // Mettre à jour l'écran OLED
+            display.clear();
+            display.drawString(0, 0, "Alarme declenchee !");
+            display.drawString(0, 10, "Etage: " + String(alarms[i].stage + 1));
+            display.display();
+        }
+    }
+}
+
 void setup() {
     Serial.begin(115200);
     Wire.begin();
@@ -280,11 +362,14 @@ void setup() {
     // Configurer le capteur d'empreintes
     setupFingerprintSensor();
 
+    // Ajouter une alarme par défaut
+    alarmManager.addAlarm("Test Alarm", 12, 0); // Alarme à 12:00 pour l'étage 1
+
     // Afficher un message de démarrage
     display.clear();
     display.drawString(0, 0, "Systeme pret !");
     display.drawString(0, 10, "Placez votre doigt");
-    display.drawString(0, 20, "puis placez une tasse.");
+    display.drawString(0, 20, "ou detectez une tasse.");
     display.display();
 }
 
@@ -380,6 +465,8 @@ void loop() {
             display.display();
             break;
     }
+
+    checkAlarms(); // Vérifier les alarmes à chaque boucle
 
     delay(100); // Petite pause pour éviter une boucle trop rapide
 }
