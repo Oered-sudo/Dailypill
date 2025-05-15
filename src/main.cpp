@@ -8,26 +8,17 @@
 #include <LittleFS.h>
 #include "AlarmManager.h"
 #include <Adafruit_Fingerprint.h>
-#include <FS.h>
-#include <SD.h>
-#include <SPI.h>
 
 // Définir les broches UART pour le capteur GT215
 #define FINGERPRINT_RX 16
 #define FINGERPRINT_TX 17
-
-// Définir les broches SPI pour la carte SD
-#define SD_MOSI 23
-#define SD_MISO 19
-#define SD_CLK 18
-#define SD_CS 5
 
 // Initialiser le capteur d'empreintes
 HardwareSerial fingerprintSerial(2);
 Adafruit_Fingerprint finger(&fingerprintSerial);
 
 // Configuration du point d'accès Wi-Fi
-const char* ssid = "ESP32-Dashboard";
+const char* ssid = "Dailypill-Dashboard";
 const char* password = "12345678";
 
 // Broches des périphériques
@@ -52,62 +43,6 @@ String alarmTime = "00:00";
 
 // Écran OLED
 SSD1306Wire display(0x3C, SDA, SCL);
-
-// Fonction pour lister les fichiers sur la carte SD
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels) {
-    Serial.printf("Listing directory: %s\n", dirname);
-    fs::File root = fs.open(dirname);
-    if (!root) {
-        Serial.println("Failed to open directory");
-        return;
-    }
-    if (!root.isDirectory()) {
-        Serial.println("Not a directory");
-        return;
-    }
-    fs::File file = root.openNextFile();
-    while (file) {
-        if (file.isDirectory()) {
-            Serial.print("  DIR : ");
-            Serial.println(file.name());
-            if (levels) {
-                listDir(fs, file.name(), levels - 1);
-            }
-        } else {
-            Serial.print("  FILE: ");
-            Serial.print(file.name());
-            Serial.print("  SIZE: ");
-            Serial.println(file.size());
-        }
-        file = root.openNextFile();
-    }
-}
-
-// Fonction pour initialiser la carte SD
-void setupSDCard() {
-    if (!SD.begin(SD_CS)) {
-        Serial.println("Erreur : Impossible de monter la carte SD !");
-        return;
-    }
-    uint8_t cardType = SD.cardType();
-    if (cardType == CARD_NONE) {
-        Serial.println("Aucune carte SD détectée !");
-        return;
-    }
-    Serial.print("Type de carte SD : ");
-    if (cardType == CARD_MMC) {
-        Serial.println("MMC");
-    } else if (cardType == CARD_SD) {
-        Serial.println("SDSC");
-    } else if (cardType == CARD_SDHC) {
-        Serial.println("SDHC");
-    } else {
-        Serial.println("Inconnu");
-    }
-    uint64_t cardSize = SD.cardSize() / (1024 * 1024);
-    Serial.printf("Taille de la carte SD : %lluMB\n", cardSize);
-    listDir(SD, "/", 0);
-}
 
 // Fonction pour activer le buzzer et effectuer une rotation du servo
 void activateBuzzer() {
@@ -231,8 +166,16 @@ void setupFingerprintSensor() {
     finger.begin(57600);
     if (finger.verifyPassword()) {
         Serial.println("Capteur d'empreintes initialisé !");
+        display.clear();
+        display.drawString(0, 0, "Capteur d'empreintes");
+        display.drawString(0, 10, "initialise !");
+        display.display();
     } else {
         Serial.println("Erreur : Impossible d'initialiser le capteur d'empreintes !");
+        display.clear();
+        display.drawString(0, 0, "Erreur: Capteur");
+        display.drawString(0, 10, "non initialise !");
+        display.display();
         while (1);
     }
 }
@@ -240,15 +183,28 @@ void setupFingerprintSensor() {
 // Fonction pour vérifier les empreintes digitales
 bool verifyFingerprint() {
     Serial.println("Placez votre doigt sur le capteur...");
+    display.clear();
+    display.drawString(0, 0, "Placez votre doigt");
+    display.drawString(0, 10, "sur le capteur...");
+    display.display();
+
     int result = finger.getImage();
     if (result != FINGERPRINT_OK) {
         Serial.println("Aucune empreinte détectée !");
+        display.clear();
+        display.drawString(0, 0, "Aucune empreinte");
+        display.drawString(0, 10, "detectee !");
+        display.display();
         return false;
     }
 
     result = finger.image2Tz();
     if (result != FINGERPRINT_OK) {
         Serial.println("Erreur lors de la conversion de l'image !");
+        display.clear();
+        display.drawString(0, 0, "Erreur: Conversion");
+        display.drawString(0, 10, "de l'image !");
+        display.display();
         return false;
     }
 
@@ -256,9 +212,17 @@ bool verifyFingerprint() {
     if (result == FINGERPRINT_OK) {
         Serial.print("Empreinte reconnue, ID : ");
         Serial.println(finger.fingerID);
+        display.clear();
+        display.drawString(0, 0, "Empreinte reconnue !");
+        display.drawString(0, 10, "ID: " + String(finger.fingerID));
+        display.display();
         return true;
     } else {
         Serial.println("Empreinte non reconnue !");
+        display.clear();
+        display.drawString(0, 0, "Empreinte non");
+        display.drawString(0, 10, "reconnue !");
+        display.display();
         return false;
     }
 }
@@ -267,11 +231,13 @@ void setup() {
     Serial.begin(115200);
     Wire.begin();
 
+    // Initialiser les servomoteurs
     servo1.attach(servoPins[0]);
     servo2.attach(servoPins[1]);
     servo3.attach(servoPins[2]);
     servo4.attach(servoPins[3]);
 
+    // Configurer les broches
     pinMode(buzzerPin, OUTPUT);
     deactivateBuzzer();
 
@@ -279,13 +245,20 @@ void setup() {
     pinMode(irLedPin, OUTPUT);
     digitalWrite(irLedPin, LOW);
 
+    // Initialiser l'écran OLED
     setupDisplay();
 
+    // Vérifier le système de fichiers
     if (!LittleFS.begin()) {
         Serial.println("Erreur : Impossible de monter LittleFS !");
-        return;
+        display.clear();
+        display.drawString(0, 0, "Erreur: LittleFS");
+        display.drawString(0, 10, "Non monte !");
+        display.display();
+        while (1); // Bloquer le programme
     }
 
+    // Configurer le Wi-Fi
     WiFi.softAP(ssid, password);
     Serial.println("Point d'accès configuré !");
     Serial.print("Nom du réseau : ");
@@ -293,11 +266,120 @@ void setup() {
     Serial.print("Adresse IP : ");
     Serial.println(WiFi.softAPIP());
 
+    // Afficher les informations Wi-Fi sur l'écran OLED
+    display.clear();
+    display.drawString(0, 0, "Wi-Fi configure !");
+    display.drawString(0, 10, "SSID: " + String(ssid));
+    display.drawString(0, 20, "IP: " + WiFi.softAPIP().toString());
+    display.display();
+    delay(3000); // Attendre 3 secondes pour que l'utilisateur voie les infos
+
+    // Configurer le serveur web
     setupWebServer();
+
+    // Configurer le capteur d'empreintes
     setupFingerprintSensor();
-    setupSDCard(); // Initialiser la carte SD
+
+    // Afficher un message de démarrage
+    display.clear();
+    display.drawString(0, 0, "Systeme pret !");
+    display.drawString(0, 10, "Placez votre doigt");
+    display.drawString(0, 20, "puis placez une tasse.");
+    display.display();
 }
 
 void loop() {
-    // Boucle principale
+    static unsigned long lastAction = 0;
+    static int state = 0;
+
+    // Changer d'état toutes les 2 secondes
+    if (millis() - lastAction > 2000) {
+        state = (state + 1) % 3; // Passer à l'état suivant (0, 1, 2)
+        lastAction = millis();
+    }
+
+    switch (state) {
+        case 0: // Vérifier les empreintes digitales
+            display.clear();
+            display.drawString(0, 0, "Etat: Verification");
+            display.drawString(0, 10, "Empreinte digitale...");
+            display.display();
+
+            if (!alarmActive) {
+                activateBuzzer(); // Activer l'alarme si elle n'est pas déjà active
+                alarmActive = true;
+            }
+
+            if (verifyFingerprint()) {
+                Serial.println("Empreinte valide, désactivation de l'alarme !");
+                deactivateBuzzer();
+                alarmActive = false;
+
+                display.clear();
+                display.drawString(0, 0, "Empreinte valide !");
+                display.drawString(0, 10, "Alarme desactivee.");
+                display.display();
+            } else {
+                Serial.println("Empreinte non valide, alarme maintenue !");
+                display.drawString(0, 20, "Empreinte non valide !");
+                display.display();
+            }
+            break;
+
+        case 1: // Vérifier la présence d'une tasse
+            display.clear();
+            display.drawString(0, 0, "Etat: Detection");
+            display.drawString(0, 10, "Detection de tasse...");
+            display.display();
+
+            if (isCupPresent()) {
+                Serial.println("Tasse détectée, envoi du signal IR !");
+                sendIrSignal();
+
+                display.clear();
+                display.drawString(0, 0, "Tasse detectee !");
+                display.drawString(0, 10, "Signal IR envoye.");
+                display.display();
+            } else {
+                display.drawString(0, 20, "Aucune tasse detectee.");
+                display.display();
+            }
+            break;
+
+        case 2: // Vérifier toutes les conditions
+            display.clear();
+            display.drawString(0, 0, "Etat: Verification");
+            display.drawString(0, 10, "Verification des conditions...");
+            display.display();
+
+            if (alarmActive && isCupPresent() && verifyFingerprint()) {
+                Serial.println("Conditions remplies, effectuer une action.");
+                Servo* servos[] = {&servo1, &servo2, &servo3, &servo4};
+                if (selectedServo >= 0 && selectedServo < 4) {
+                    Servo* servo = servos[selectedServo];
+                    int initialPosition = servo->read(); // Lire la position initiale
+                    servo->write(90);
+                    delay(500); // Attendre un moment pour que le servo atteigne la position
+                    servo->write(initialPosition); // Revenir à la position initiale
+                }
+
+                display.clear();
+                display.drawString(0, 0, "Action effectuee !");
+                display.drawString(0, 10, "Servo active.");
+                display.display();
+            } else {
+                display.drawString(0, 20, "Conditions non remplies.");
+                display.display();
+            }
+            break;
+
+        default:
+            Serial.println("État inconnu !");
+            display.clear();
+            display.drawString(0, 0, "Etat inconnu !");
+            display.display();
+            break;
+    }
+
+    delay(100); // Petite pause pour éviter une boucle trop rapide
 }
